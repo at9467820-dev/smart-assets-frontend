@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}New Asset / Material Requisition{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+  <div>
+    <h1 class="page-title">
+      <i class="bi bi-cart-plus-fill me-2" style="color:var(--emerald)"></i>New Asset / Material Requisition
+    </h1>
+    <p class="page-subtitle">Submit procurement requests for new assets, lab components, or replacement equipment</p>
+  </div>
+  <div>
+    <a href="{{ url_for('orders.list_orders') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i>Back to Orders List
+    </a>
+  </div>
+</div>
+
+<div class="row g-4 justify-content-center">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header-custom">
+        <h3 class="card-title"><i class="bi bi-file-earmark-text me-2" style="color:var(--gold)"></i>Requisition Details</h3>
+      </div>
+      <div class="card-body-custom">
+        <form method="POST" action="{{ url_for('orders.create') }}">
+
+          <div class="row g-3">
+            <div class="col-md-8">
+              <label class="form-label-custom">Item / Asset Name *</label>
+              <input type="text" name="item_name" class="form-control-custom" placeholder="e.g. Intel Core i7 Workstation, Agilent Digital Multimeter, Cisco Switch" required />
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label-custom">Category *</label>
+              <select name="category" class="form-select-custom" required>
+                <option value="Computer">Computer</option>
+                <option value="Lab Equipment">Lab Equipment</option>
+                <option value="Networking">Networking</option>
+                <option value="Projector">Projector</option>
+                <option value="Electrical">Electrical</option>
+                <option value="HVAC">HVAC</option>
+                <option value="Furniture">Furniture</option>
+                <option value="Other" selected>Other / Components</option>
+              </select>
+            </div>
+
+            {% if current_user.is_admin %}
+            <div class="col-md-6">
+              <label class="form-label-custom">Department *</label>
+              <select name="department_id" class="form-select-custom" required>
+                {% for d in departments %}
+                <option value="{{ d.id }}">{{ d.name }} ({{ d.code }})</option>
+                {% endfor %}
+              </select>
+            </div>
+            {% endif %}
+
+            <div class="col-md-3">
+              <label class="form-label-custom">Quantity *</label>
+              <input type="number" name="quantity" min="1" value="1" class="form-control-custom" required />
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label-custom">Estimated Unit Cost (₹)</label>
+              <input type="number" step="0.01" name="estimated_unit_cost" class="form-control-custom" placeholder="0.00" />
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label-custom">Priority Level</label>
+              <select name="priority" class="form-select-custom">
+                <option value="low">Low</option>
+                <option value="medium" selected>Medium</option>
+                <option value="high">High</option>
+                <option value="critical">Critical (Immediate necessity)</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label-custom">Preferred Supplier / Vendor</label>
+              <input type="text" name="supplier_name" class="form-control-custom" placeholder="e.g. Dell India, Agilent Technologies, Local Supplier" />
+            </div>
+
+            <div class="col-12">
+              <label class="form-label-custom">Business / Academic Justification *</label>
+              <textarea name="justification" rows="3" class="form-control-custom" placeholder="State why this equipment is needed (e.g. Replacement for damaged unit in CS Lab 2, New batch lab requirement)..." required></textarea>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label-custom">Technical Specifications & Notes</label>
+              <textarea name="specs_notes" rows="2" class="form-control-custom" placeholder="e.g. Minimum 32GB RAM, 1TB NVMe, 3-year on-site warranty required"></textarea>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end gap-2 pt-4 mt-3 border-top">
+            <a href="{{ url_for('orders.list_orders') }}" class="btn btn-outline-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary px-4">
+              <i class="bi bi-check2-circle me-1"></i>Submit Procurement Requisition
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

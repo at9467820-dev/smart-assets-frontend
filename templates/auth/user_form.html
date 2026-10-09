@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit User' if user else 'New User' }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{{ 'Edit User' if user else 'Create New User' }}</h1>
+  </div>
+  <a href="{{ url_for('auth.users') }}" class="btn btn-outline-primary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Back
+  </a>
+</div>
+
+<div style="max-width:540px">
+  <div class="card">
+    <div class="card-body-custom">
+      <form method="POST">
+        <div style="display:grid;gap:16px">
+          <div>
+            <label class="form-label-custom">Full Name</label>
+            <input type="text" name="full_name" class="form-control-custom" value="{{ form.full_name if form.full_name is string else (user.full_name if user else '') }}" />
+          </div>
+          <div>
+            <label class="form-label-custom">Username *</label>
+            <input type="text" name="username" class="form-control-custom" required value="{{ user.username if user else '' }}" {{ 'readonly' if user }} />
+          </div>
+          <div>
+            <label class="form-label-custom">Email *</label>
+            <input type="email" name="email" class="form-control-custom" required value="{{ user.email if user else '' }}" />
+          </div>
+          <div>
+            <label class="form-label-custom">Role *</label>
+            <select name="role" class="form-control-custom" required>
+              <option value="admin" {{ 'selected' if user and user.role=='admin' }}>Administrator</option>
+              <option value="department" {{ 'selected' if not user or user.role=='department' }}>Department Staff</option>
+              <option value="maintenance" {{ 'selected' if user and user.role=='maintenance' }}>Maintenance Staff</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label-custom">Department</label>
+            <select name="department_id" class="form-control-custom">
+              <option value="">None</option>
+              {% for d in departments %}
+              <option value="{{ d.id }}" {{ 'selected' if user and user.department_id == d.id }}>{{ d.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="form-label-custom">{{ 'New Password (leave blank to keep current)' if user else 'Password *' }}</label>
+            <input type="password" name="password" class="form-control-custom" {{ 'required' if not user }} />
+          </div>
+          {% if user %}
+          <div style="display:flex;align-items:center;gap:10px">
+            <input type="checkbox" name="is_active" id="is_active" {{ 'checked' if user.is_active }} style="accent-color:var(--navy)" />
+            <label for="is_active" style="font-size:13.5px">Active account</label>
+          </div>
+          {% endif %}
+        </div>
+        <button type="submit" class="btn btn-primary mt-4">
+          <i class="bi bi-check-lg me-1"></i>{{ 'Save Changes' if user else 'Create User' }}
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

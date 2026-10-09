@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}Analysis{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Asset Utilization Analysis</h1>
+    <p class="page-subtitle">Underutilized assets, frequently damaged items, and risk assessment</p>
+  </div>
+</div>
+
+<!-- Dept Utilization Chart -->
+<div class="card" style="margin-bottom:24px">
+  <div class="card-header-custom">
+    <h3 class="card-title"><i class="bi bi-bar-chart-steps me-2" style="color:var(--brass)"></i>Department Utilization (Stacked by Status)</h3>
+  </div>
+  <div class="card-body-custom" style="height:260px;position:relative">
+    <canvas id="utilization-chart"
+      data-labels='{{ dept_stats | map(attribute="dept") | map(attribute="name") | list | tojson }}'
+      data-active='{{ dept_stats | map(attribute="active") | list | tojson }}'
+      data-repair='{{ dept_stats | map(attribute="under_repair") | list | tojson }}'
+      data-damaged='{{ dept_stats | map(attribute="damaged") | list | tojson }}'
+      data-retired='{{ dept_stats | map(attribute="retired") | list | tojson }}'>
+    </canvas>
+  </div>
+</div>
+
+<!-- Three columns: Underutilized | Frequently Damaged | High Risk -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));gap:20px">
+
+  <!-- Underutilized -->
+  <div class="card">
+    <div class="card-header-custom">
+      <h3 class="card-title" style="font-size:13.5px;display:flex;align-items:center;gap:6px"><i class="bi bi-moon-stars" style="color:var(--ink-muted)"></i>Underutilized (6+ mo idle)</h3>
+      <span class="badge-pill badge-secondary">{{ underutilized|length }}</span>
+    </div>
+    <div style="max-height:400px;overflow-y:auto">
+      {% for item in underutilized %}
+      <div class="alert-item" style="padding:10px 16px">
+        <div class="alert-icon-wrap" style="background:var(--bg);color:var(--ink-muted)"><i class="bi bi-clock"></i></div>
+        <div style="flex:1;min-width:0">
+          <a href="{{ url_for('assets.detail', asset_id=item.asset.id) }}" style="font-size:12.5px;font-weight:500;color:var(--navy);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+            {{ item.asset.name }}
+          </a>
+          <div style="font-size:11px;color:var(--ink-muted)">{{ item.asset.asset_tag }} · {{ item.idle_days }}d idle</div>
+        </div>
+        <span class="badge-pill badge-secondary" style="font-size:10px">{{ item.asset.department.name if item.asset.department else '—' }}</span>
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding:32px 16px">
+        <div class="empty-icon" style="font-size:28px">✅</div>
+        <div class="empty-sub">No underutilized assets</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Frequently Damaged -->
+  <div class="card">
+    <div class="card-header-custom">
+      <h3 class="card-title" style="font-size:13.5px;display:flex;align-items:center;gap:6px"><i class="bi bi-exclamation-triangle" style="color:var(--warning)"></i>Frequent Repairs (3+/yr)</h3>
+      <span class="badge-pill badge-warning">{{ frequently_damaged|length }}</span>
+    </div>
+    <div style="max-height:400px;overflow-y:auto">
+      {% for item in frequently_damaged %}
+      <div class="alert-item" style="padding:10px 16px">
+        <div class="alert-icon-wrap warning"><i class="bi bi-tools"></i></div>
+        <div style="flex:1;min-width:0">
+          <a href="{{ url_for('assets.detail', asset_id=item.asset.id) }}" style="font-size:12.5px;font-weight:500;color:var(--navy);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+            {{ item.asset.name }}
+          </a>
+          <div style="font-size:11px;color:var(--ink-muted)">{{ item.asset.asset_tag }} · {{ item.repairs_this_year }} repairs this year</div>
+        </div>
+        <span class="badge-pill badge-warning" style="font-size:10px">{{ item.repairs_this_year }}x</span>
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding:32px 16px">
+        <div class="empty-icon" style="font-size:28px">✅</div>
+        <div class="empty-sub">No frequently damaged assets</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- High Risk -->
+  <div class="card">
+    <div class="card-header-custom">
+      <h3 class="card-title" style="font-size:13.5px;display:flex;align-items:center;gap:6px"><i class="bi bi-shield-exclamation" style="color:var(--danger)"></i>At Risk (Score ≥ 50)</h3>
+      <span class="badge-pill badge-danger">{{ risk_assets|length }}</span>
+    </div>
+    <div style="max-height:400px;overflow-y:auto">
+      {% for item in risk_assets %}
+      <div class="alert-item" style="padding:10px 16px">
+        <div class="alert-icon-wrap danger"><i class="bi bi-shield-exclamation"></i></div>
+        <div style="flex:1;min-width:0">
+          <a href="{{ url_for('assets.detail', asset_id=item.asset.id) }}" style="font-size:12.5px;font-weight:500;color:var(--navy);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+            {{ item.asset.name }}
+          </a>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:3px">
+            <div class="risk-bar {{ 'risk-high' if item.score >= 70 else 'risk-medium' }}" style="flex:1">
+              <div class="risk-bar-fill" style="width:{{ item.score }}%"></div>
+            </div>
+            <small style="font-size:10px;color:var(--ink-muted);width:22px">{{ item.score }}</small>
+          </div>
+        </div>
+        <span class="badge-pill {{ item.badge }}" style="font-size:10px">{{ item.label }}</span>
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding:32px 16px">
+        <div class="empty-icon" style="font-size:28px">✅</div>
+        <div class="empty-sub">No high-risk assets</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Department Stats Table -->
+<div class="card" style="margin-top:24px">
+  <div class="card-header-custom">
+    <h3 class="card-title"><i class="bi bi-building me-2" style="color:var(--brass)"></i>Department Statistics</h3>
+  </div>
+  <div style="overflow-x:auto">
+    <table class="table-custom">
+      <thead>
+        <tr>
+          <th>Department</th>
+          <th>Total Assets</th>
+          <th>Active</th>
+          <th>Under Repair</th>
+          <th>Damaged</th>
+          <th>Retired</th>
+          <th>Utilization</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in dept_stats %}
+        <tr>
+          <td>
+            <div style="font-weight:600;color:var(--navy)">{{ s.dept.name }}</div>
+            <small class="text-muted">{{ s.dept.code }}</small>
+          </td>
+          <td style="font-weight:600">{{ s.total }}</td>
+          <td><span class="badge-pill badge-success">{{ s.active }}</span></td>
+          <td><span class="badge-pill badge-warning">{{ s.under_repair }}</span></td>
+          <td><span class="badge-pill badge-danger">{{ s.damaged }}</span></td>
+          <td><span class="badge-pill badge-secondary">{{ s.retired }}</span></td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px;min-width:100px">
+              <div class="risk-bar risk-low" style="flex:1">
+                <div class="risk-bar-fill" style="width:{{ s.utilization_pct }}%"></div>
+              </div>
+              <small style="font-size:11px;color:var(--ink-muted);width:35px">{{ s.utilization_pct }}%</small>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

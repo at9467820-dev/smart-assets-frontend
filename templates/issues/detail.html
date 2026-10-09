@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+{% block title %}Gate Pass #{{ issue.slip_number }} — {{ issue.asset.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+  <div>
+    <div class="d-flex align-items-center gap-2 mb-1">
+      <span class="badge {{ issue.status_badge_class }}">{{ issue.status_label }}</span>
+      <span class="text-muted" style="font-size:12px;font-family:monospace">{{ issue.slip_number }}</span>
+    </div>
+    <h1 class="page-title">Material Issue Slip / Gate Pass (Parchi)</h1>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{{ url_for('issues.print_parchi', issue_id=issue.id) }}" target="_blank" class="btn btn-dark btn-sm">
+      <i class="bi bi-printer-fill me-1"></i>Print Parchi (Slip)
+    </a>
+    <a href="{{ url_for('issues.download_pdf', issue_id=issue.id) }}" class="btn btn-primary btn-sm">
+      <i class="bi bi-file-earmark-pdf-fill me-1"></i>Download PDF Parchi
+    </a>
+    {% if issue.status == 'issued' %}
+    <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#returnModal">
+      <i class="bi bi-box-arrow-in-down-left me-1"></i>Return Material & Clear Pass
+    </button>
+    {% else %}
+    <a href="{{ url_for('issues.download_return_pdf', issue_id=issue.id) }}" class="btn btn-outline-success btn-sm">
+      <i class="bi bi-shield-check me-1"></i>Download Return Receipt
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ── The Physical / Digital Parchi Document Card ─────────────────────── -->
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card" style="border: 2px solid var(--navy);box-shadow: 0 10px 25px rgba(18,32,61,0.08)">
+      
+      <!-- Parchi Header -->
+      <div style="background:var(--navy);color:white;padding:20px 24px;border-top-left-radius:calc(var(--radius-md) - 2px);border-top-right-radius:calc(var(--radius-md) - 2px);">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+          <div>
+            <div style="font-size:11px;letter-spacing:1.5px;color:var(--gold);text-transform:uppercase;font-weight:700">
+              AssetPulse Smart Asset Management System (SAMS)
+            </div>
+            <h3 style="color:white;margin:4px 0 0;font-size:20px;font-family:var(--font-heading)">
+              Official Material Issue Voucher & Gate Pass
+            </h3>
+          </div>
+          <div class="text-end">
+            <div style="background:rgba(255,255,255,0.1);padding:6px 14px;border-radius:var(--radius-sm);border:1px solid rgba(255,255,255,0.2)">
+              <div style="font-size:10px;opacity:0.8">GATE PASS NO.</div>
+              <div style="font-size:16px;font-weight:700;letter-spacing:1px;color:var(--gold)">{{ issue.slip_number }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-body-custom p-4">
+        
+        <!-- Status Banner -->
+        <div class="p-3 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3" style="background:var(--bg);border-radius:var(--radius-sm);border-left:4px solid var(--gold)">
+          <div>
+            <div class="text-muted" style="font-size:11px;text-transform:uppercase;font-weight:600">Issue Classification</div>
+            <div class="fw-bold text-dark fs-6">{{ issue.gate_pass_type.replace('_', ' ').title() }} Gate Pass</div>
+          </div>
+          <div class="text-end">
+            <div class="text-muted" style="font-size:11px;text-transform:uppercase;font-weight:600">Current Slip Status</div>
+            <span class="badge {{ issue.status_badge_class }}" style="font-size:12px">{{ issue.status_label }}</span>
+          </div>
+        </div>
+
+        <!-- 2 Columns: Recipient & Issuer Info vs Asset Specs -->
+        <div class="row g-4 mb-4">
+          
+          <!-- Recipient & Issuer -->
+          <div class="col-md-6">
+            <h6 class="fw-bold text-dark border-bottom pb-2 mb-3" style="font-size:13px;letter-spacing:0.5px">
+              <i class="bi bi-person-badge me-1" style="color:var(--emerald)"></i>RECIPIENT & AUTHORIZATION
+            </h6>
+            
+            <table class="table table-sm table-borderless" style="font-size:13px">
+              <tr>
+                <td class="text-muted" style="width:40%">Issued To (Bearer):</td>
+                <td class="fw-bold text-dark">{{ issue.issued_to_name }}</td>
+              </tr>
+              <tr>
+                <td class="text-muted">ID / Roll No:</td>
+                <td class="fw-semibold">{{ issue.issued_to_id_number or 'N/A' }}</td>
+              </tr>
+              <tr>
+                <td class="text-muted">Department:</td>
+                <td>{{ issue.issued_to_dept or 'N/A' }}</td>
+              </tr>
+              <tr>
+                <td class="text-muted">Contact Phone:</td>
+                <td>{{ issue.issued_to_phone or 'N/A' }}</td>
+              </tr>
+              <tr>
+                <td class="text-muted">Email:</td>
+                <td>{{ issue.issued_to_email or 'N/A' }}</td>
+              </tr>
+              <tr>
+                <td class="text-muted">Authorized Issuer:</td>
+                <td class="fw-bold text-primary">{{ issue.issuer_name or (issue.issued_by.full_name if issue.issued_by else 'Admin') }}</td>
+              </tr>
+              <tr>
+                <td class="text-muted">Issuer Role/Dept:</td>
+                <td>{{ issue.issued_by.role.title() if issue.issued_by else 'Staff' }} • {{ issue.issued_by.department.name if (issue.issued_by and issue.issued_by.department) else 'Administration' }}</td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- Asset & Timestamps -->
+          <div class="col-md-6">
+            <h6 class="fw-bold text-dark border-bottom pb-2 mb-3" style="font-size:13px;letter-spacing:0.5px">
+              <i class="bi bi-box-seam me-1" style="color:var(--navy)"></i>MATERIAL SPECIFICATIONS
+            </h6>
+
+            <table class="table table-sm table-borderless" style="font-size:13px">
+              <tr>
+                <td class="text-muted" style="width:40%">Asset Tag:</td>
+                <td>
+                  <a href="{{ url_for('assets.detail', asset_id=issue.asset.id) }}" class="badge-tag">
+                    {{ issue.asset.asset_tag }}
+                  </a>
+                </td>
+              </tr>
+              <tr>
+                <td class="text-muted">Equipment Name:</td>
+                <td class="fw-bold text-dark">{{ issue.asset.name }}</td>
+              </tr>
+              <tr>
+                <td class="text-muted">Category:</td>
+                <td>{{ issue.asset.category }}</td>
+              </tr>
+              <tr>
+                <td class="text-muted">Serial Number:</td>
+                <td><code>{{ issue.asset.serial_number or 'N/A' }}</code></td>
+              </tr>
+              <tr>
+                <td class="text-muted">Issue Date & Time:</td>
+                <td class="fw-bold text-dark">{{ issue.issue_date.strftime('%d %B %Y, %I:%M %p') }}</td>
+              </tr>
+              <tr>
+                <td class="text-muted">Expected Due Date:</td>
+                <td class="{{ 'text-danger fw-bold' if issue.is_overdue else 'fw-bold text-dark' }}">
+                  {{ issue.expected_return_date.strftime('%d %B %Y, %I:%M %p') if issue.expected_return_date else 'Non-Returnable' }}
+                </td>
+              </tr>
+              <tr>
+                <td class="text-muted">Condition at Issue:</td>
+                <td><span class="badge bg-light text-dark border">{{ issue.issue_condition or 'Good' }}</span></td>
+              </tr>
+            </table>
+          </div>
+        </div>
+
+        <!-- Purpose & Remarks -->
+        <div class="p-3 mb-4" style="background:var(--bg);border-radius:var(--radius-sm)">
+          <div class="row g-2" style="font-size:13px">
+            <div class="col-md-6">
+              <span class="text-muted">Purpose of Issue:</span>
+              <div class="fw-semibold text-dark mt-1">{{ issue.purpose }}</div>
+            </div>
+            <div class="col-md-6">
+              <span class="text-muted">Special Remarks / Accessories:</span>
+              <div class="fw-semibold text-dark mt-1">{{ issue.remarks_on_issue or 'Standard handover.' }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Return Section if Returned -->
+        {% if issue.status in ['returned', 'damaged_returned'] %}
+        <div class="p-3 mb-4" style="background:rgba(16,185,129,0.08);border-radius:var(--radius-sm);border:1px solid rgba(16,185,129,0.3)">
+          <h6 class="fw-bold text-success mb-2"><i class="bi bi-check-circle-fill me-1"></i>Return Audit & Clearance Record</h6>
+          <div class="row g-2" style="font-size:13px">
+            <div class="col-md-4">
+              <span class="text-muted">Actual Return Time:</span>
+              <div class="fw-bold text-dark">{{ issue.actual_return_date.strftime('%d %B %Y, %I:%M %p') if issue.actual_return_date else 'N/A' }}</div>
+            </div>
+            <div class="col-md-4">
+              <span class="text-muted">Received & Cleared By:</span>
+              <div class="fw-bold text-dark">{{ issue.received_by.full_name if issue.received_by else 'Authorized Staff' }}</div>
+            </div>
+            <div class="col-md-4">
+              <span class="text-muted">Condition on Return:</span>
+              <div class="fw-bold text-dark">{{ issue.return_condition or 'Good' }}</div>
+            </div>
+            {% if issue.remarks_on_return %}
+            <div class="col-12 mt-2">
+              <span class="text-muted">Inspection Notes:</span>
+              <div class="text-dark">{{ issue.remarks_on_return }}</div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Signatures representation -->
+        <div class="row g-3 pt-3 border-top text-center" style="font-size:12px">
+          <div class="col-4">
+            <div style="height:45px;border-bottom:1px dashed var(--hairline);display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;font-style:italic;color:var(--navy)">
+              {{ issue.issuer_name or (issue.issued_by.full_name if issue.issued_by else 'Issuer') }}
+            </div>
+            <div class="text-muted mt-1">Authorized Issuer Signature</div>
+          </div>
+          <div class="col-4">
+            <div style="height:45px;border-bottom:1px dashed var(--hairline);display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;font-style:italic;color:var(--navy)">
+              {{ issue.issued_to_name }}
+            </div>
+            <div class="text-muted mt-1">Recipient / Bearer Signature</div>
+          </div>
+          <div class="col-4">
+            <div style="height:45px;border-bottom:1px dashed var(--hairline);display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;font-style:italic;color:var(--navy)">
+              Checkpoint Stamp
+            </div>
+            <div class="text-muted mt-1">Security Gate Officer</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Actions Column -->
+  <div class="col-lg-4">
+    
+    <!-- Quick Actions Card -->
+    <div class="card mb-4">
+      <div class="card-header-custom">
+        <h4 class="card-title" style="font-size:14px">
+          <i class="bi bi-lightning-charge-fill me-2" style="color:var(--gold)"></i>Parchi Operations
+        </h4>
+      </div>
+      <div class="card-body-custom d-flex flex-column gap-2">
+        <a href="{{ url_for('issues.print_parchi', issue_id=issue.id) }}" target="_blank" class="btn btn-dark w-100 text-start">
+          <i class="bi bi-printer me-2"></i>Print Official Gate Pass (A4)
+        </a>
+        <a href="{{ url_for('issues.download_pdf', issue_id=issue.id) }}" class="btn btn-primary w-100 text-start">
+          <i class="bi bi-file-earmark-pdf me-2"></i>Download PDF Voucher
+        </a>
+        {% if issue.status == 'issued' %}
+        <button type="button" class="btn btn-success w-100 text-start" data-bs-toggle="modal" data-bs-target="#returnModal">
+          <i class="bi bi-box-arrow-in-down-left me-2"></i>Process Return & Clearance
+        </button>
+        {% endif %}
+        <a href="{{ url_for('maintenance.create', asset_id=issue.asset.id) }}" class="btn btn-outline-warning w-100 text-start text-dark">
+          <i class="bi bi-tools me-2 text-warning"></i>Send Asset to Maintenance
+        </a>
+        <a href="{{ url_for('orders.create') }}" class="btn btn-outline-secondary w-100 text-start">
+          <i class="bi bi-cart-plus me-2"></i>Order Spare Parts / Replacement
+        </a>
+        <a href="{{ url_for('assets.detail', asset_id=issue.asset.id) }}" class="btn btn-outline-secondary w-100 text-start">
+          <i class="bi bi-box-arrow-up-right me-2"></i>View Asset Master Record
+        </a>
+      </div>
+    </div>
+
+    <!-- Asset QR Preview -->
+    <div class="card">
+      <div class="card-header-custom">
+        <h4 class="card-title" style="font-size:14px">
+          <i class="bi bi-qr-code-scan me-2" style="color:var(--navy)"></i>Scan & Verification
+        </h4>
+      </div>
+      <div class="card-body-custom text-center">
+        {% if issue.asset.qr_code_path %}
+        <img src="{{ url_for('static', filename=issue.asset.qr_code_path) }}" alt="QR Code" style="width:160px;height:auto;border-radius:var(--radius-sm);border:1px solid var(--hairline)" />
+        {% else %}
+        <div class="p-4 text-muted">No QR generated</div>
+        {% endif %}
+        <div class="text-muted mt-2" style="font-size:12px">
+          Scan this QR code from any mobile camera to instantly access asset lifecycle, issue, or service order!
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Return Modal -->
+{% if issue.status == 'issued' %}
+<div class="modal fade" id="returnModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form action="{{ url_for('issues.return_asset', issue_id=issue.id) }}" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-box-arrow-in-down-left me-2 text-success"></i>Return Asset & Generate Clearance
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="p-3 mb-3" style="background:var(--bg);border-radius:var(--radius-sm)">
+            <div class="fw-bold text-dark">{{ issue.asset.name }} ({{ issue.asset.asset_tag }})</div>
+            <div class="text-muted" style="font-size:12px">Bearer: <b>{{ issue.issued_to_name }}</b> ({{ issue.issued_to_dept or 'N/A' }})</div>
+            <div class="text-muted" style="font-size:12px">Slip: <code>{{ issue.slip_number }}</code></div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label-custom">Condition on Return *</label>
+            <select name="return_condition" class="form-select-custom" required>
+              <option value="Good / Functional" selected>Good / Functional (Normal return)</option>
+              <option value="Minor Wear / Scratches">Minor Wear / Scratches</option>
+              <option value="Damaged - Needs Repair">Damaged - Needs Repair</option>
+              <option value="Broken / Defective">Broken / Defective</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label-custom">Return Remarks / Inspection Notes</label>
+            <textarea name="remarks_on_return" rows="2" class="form-control-custom" placeholder="e.g. All parts verified and functioning properly."></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label-custom">Penalty / Fine Amount (₹ if any)</label>
+            <input type="number" step="0.01" name="fine_amount" class="form-control-custom" value="0.00" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-success btn-sm">
+            <i class="bi bi-check2-circle me-1"></i>Confirm Return & Generate Clearance Slip
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

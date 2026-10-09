@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}Maintenance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Maintenance Requests</h1>
+    <p class="page-subtitle">{{ logs.total }} records found</p>
+  </div>
+  <a href="{{ url_for('maintenance.create') }}" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-lg me-1"></i>New Request
+  </a>
+</div>
+
+<!-- Filters -->
+<div class="card" style="margin-bottom:20px">
+  <div class="card-body-custom">
+    <form method="GET" class="d-flex flex-wrap gap-2 align-items-end">
+      <div style="flex:1;min-width:120px">
+        <label class="form-label-custom">Status</label>
+        <select name="status" class="form-control-custom">
+          <option value="">All Statuses</option>
+          <option value="pending" {{ 'selected' if status_filter=='pending' }}>Pending</option>
+          <option value="in_progress" {{ 'selected' if status_filter=='in_progress' }}>In Progress</option>
+          <option value="resolved" {{ 'selected' if status_filter=='resolved' }}>Resolved</option>
+          <option value="cancelled" {{ 'selected' if status_filter=='cancelled' }}>Cancelled</option>
+        </select>
+      </div>
+      <div style="flex:1;min-width:120px">
+        <label class="form-label-custom">Priority</label>
+        <select name="priority" class="form-control-custom">
+          <option value="">All Priorities</option>
+          <option value="critical" {{ 'selected' if priority_filter=='critical' }}>Critical</option>
+          <option value="high" {{ 'selected' if priority_filter=='high' }}>High</option>
+          <option value="medium" {{ 'selected' if priority_filter=='medium' }}>Medium</option>
+          <option value="low" {{ 'selected' if priority_filter=='low' }}>Low</option>
+        </select>
+      </div>
+      {% if current_user.is_admin %}
+      <div style="flex:1;min-width:140px">
+        <label class="form-label-custom">Department</label>
+        <select name="department" class="form-control-custom">
+          <option value="">All Departments</option>
+          {% for d in departments %}
+          <option value="{{ d.id }}" {{ 'selected' if dept_filter == d.id|string }}>{{ d.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endif %}
+      <div>
+        <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+        <a href="{{ url_for('maintenance.list_logs') }}" class="btn btn-outline-primary btn-sm ms-1">Reset</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Table -->
+<div class="card">
+  {% if logs.items %}
+  <div style="overflow-x:auto">
+    <table class="table-custom">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Asset</th>
+          <th>Issue</th>
+          <th>Status</th>
+          <th>Priority</th>
+          <th>Requested By</th>
+          <th>Assigned To</th>
+          <th>Request Date</th>
+          <th>Scheduled</th>
+          <th>Cost (₹)</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs.items %}
+        <tr {% if log.is_overdue %}style="background:var(--danger-tint)"{% endif %}>
+          <td>
+            <a href="{{ url_for('maintenance.detail', log_id=log.id) }}" style="font-weight:600;color:var(--navy);font-size:12px">
+              #{{ log.id }}
+            </a>
+          </td>
+          <td>
+            {% if log.asset %}
+            <a href="{{ url_for('assets.detail', asset_id=log.asset.id) }}" style="font-weight:500;color:var(--navy)">
+              {{ log.asset.asset_tag }}
+            </a>
+            <div style="font-size:11px;color:var(--ink-muted)">{{ log.asset.name[:30] }}</div>
+            {% else %}—{% endif %}
+          </td>
+          <td style="max-width:180px;font-size:12.5px">{{ (log.issue_description or '')[:50] }}{{ '…' if (log.issue_description or '')|length > 50 }}</td>
+          <td>
+            <span class="badge-pill {{ 'badge-success' if log.status=='resolved' else ('badge-warning' if log.status=='in_progress' else ('badge-danger' if log.status=='cancelled' else 'badge-secondary')) }}">
+              {{ log.status.replace('_',' ').title() }}
+            </span>
+            {% if log.is_overdue %}<span class="badge-pill badge-danger ms-1" style="font-size:9px">OVERDUE</span>{% endif %}
+          </td>
+          <td>
+            <span class="badge-pill {{ 'badge-danger' if log.priority=='critical' else ('badge-warning' if log.priority=='high' else ('badge-info' if log.priority=='medium' else 'badge-secondary')) }}">
+              {{ (log.priority or 'medium').title() }}
+            </span>
+          </td>
+          <td style="font-size:12px">{{ log.requested_by.full_name if log.requested_by else '—' }}</td>
+          <td style="font-size:12px">{{ log.assigned_to.full_name if log.assigned_to else '—' }}</td>
+          <td style="font-size:12px">{{ log.request_date.strftime('%d %b %Y') if log.request_date else '—' }}</td>
+          <td style="font-size:12px">
+            {% if log.scheduled_date %}
+              {{ log.scheduled_date.strftime('%d %b %Y') }}
+            {% else %}—{% endif %}
+          </td>
+          <td style="font-size:12px">{{ '₹{:,.0f}'.format(log.actual_cost|float) if log.actual_cost else '—' }}</td>
+          <td>
+            <a href="{{ url_for('maintenance.detail', log_id=log.id) }}" class="btn-icon" data-bs-toggle="tooltip" title="View">
+              <i class="bi bi-eye"></i>
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if logs.pages > 1 %}
+  <div style="padding:16px 20px;border-top:1px solid var(--hairline)">
+    <nav>
+      <ul class="pagination pagination-sm mb-0">
+        {% if logs.has_prev %}<li class="page-item"><a class="page-link" href="?page={{ logs.prev_num }}&status={{ status_filter }}&priority={{ priority_filter }}&department={{ dept_filter }}">‹</a></li>{% endif %}
+        {% for p in logs.iter_pages() %}
+          {% if p %}<li class="page-item {{ 'active' if p == logs.page }}"><a class="page-link" href="?page={{ p }}&status={{ status_filter }}&priority={{ priority_filter }}&department={{ dept_filter }}">{{ p }}</a></li>
+          {% else %}<li class="page-item disabled"><span class="page-link">…</span></li>{% endif %}
+        {% endfor %}
+        {% if logs.has_next %}<li class="page-item"><a class="page-link" href="?page={{ logs.next_num }}&status={{ status_filter }}&priority={{ priority_filter }}&department={{ dept_filter }}">›</a></li>{% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon"><i class="bi bi-tools"></i></div>
+    <div class="empty-title">No maintenance records</div>
+    <div class="empty-sub"><a href="{{ url_for('maintenance.create') }}">Create the first request →</a></div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

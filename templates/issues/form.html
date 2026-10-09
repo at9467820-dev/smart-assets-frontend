@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% block title %}Issue Material / Generate Gate Pass (Parchi){% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+  <div>
+    <h1 class="page-title">
+      <i class="bi bi-file-earmark-plus-fill me-2" style="color:var(--emerald)"></i>Issue Material / Gate Pass (Parchi)
+    </h1>
+    <p class="page-subtitle">Assign equipment to personnel with exact issuer timestamp, recipient tracking, and printable gate pass</p>
+  </div>
+  <div>
+    <a href="{{ url_for('issues.list_issues') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i>Back to Issues List
+    </a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Form Column -->
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header-custom">
+        <h3 class="card-title">
+          <i class="bi bi-receipt-cutoff me-2" style="color:var(--gold)"></i>Gate Pass Requisition Form
+        </h3>
+      </div>
+      <div class="card-body-custom">
+        <form method="POST" action="{{ url_for('issues.create') }}">
+
+          <!-- Section 1: Asset Selection -->
+          <div class="mb-4">
+            <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">
+              <span class="badge bg-dark rounded-circle me-1">1</span> Select Equipment / Material
+            </h6>
+
+            {% if preselected_asset %}
+            <div class="p-3 mb-3 d-flex align-items-center justify-content-between flex-wrap gap-3" style="background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--emerald)">
+              <div>
+                <span class="badge badge-tag me-2">{{ preselected_asset.asset_tag }}</span>
+                <span class="fw-bold text-dark fs-6">{{ preselected_asset.name }}</span>
+                <div class="text-muted" style="font-size:12px;margin-top:3px">
+                  Category: <b>{{ preselected_asset.category }}</b> • Dept: <b>{{ preselected_asset.department.name if preselected_asset.department else 'N/A' }}</b> • Location: <b>{{ preselected_asset.location or 'N/A' }}</b>
+                </div>
+              </div>
+              <input type="hidden" name="asset_id" value="{{ preselected_asset.id }}" />
+              <a href="{{ url_for('issues.create') }}" class="btn btn-sm btn-outline-secondary">Change Asset</a>
+            </div>
+            {% else %}
+            <div class="mb-3">
+              <label class="form-label-custom">Asset / Equipment *</label>
+              <select name="asset_id" class="form-select-custom" required>
+                <option value="">-- Choose an available asset --</option>
+                {% for a in available_assets %}
+                <option value="{{ a.id }}">
+                  [{{ a.asset_tag }}] {{ a.name }} ({{ a.department.code if a.department else '' }} - {{ a.location or 'Lab' }})
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Section 2: Gate Pass Type & Purpose -->
+          <div class="mb-4">
+            <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">
+              <span class="badge bg-dark rounded-circle me-1">2</span> Issue Terms & Purpose
+            </h6>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label-custom">Gate Pass Type *</label>
+                <select name="gate_pass_type" class="form-select-custom" required>
+                  <option value="returnable" selected>Returnable (Equipment will be returned)</option>
+                  <option value="non_returnable">Non-Returnable (Material Consumed / Permanent)</option>
+                </select>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label-custom">Expected Return Date & Time</label>
+                <input type="datetime-local" name="expected_return_date" class="form-control-custom" />
+                <div class="form-text" style="font-size:11px">Leave blank if non-returnable.</div>
+              </div>
+
+              <div class="col-md-12">
+                <label class="form-label-custom">Purpose of Issue / Project *</label>
+                <input type="text" name="purpose" class="form-control-custom" placeholder="e.g. Major Project Lab Testing, Campus Tech Fest, Seminar Presentation, Field Survey" required />
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label-custom">Condition on Handover</label>
+                <select name="issue_condition" class="form-select-custom">
+                  <option value="Good / Functional" selected>Good / Functional (Tested)</option>
+                  <option value="Brand New">Brand New / Sealed</option>
+                  <option value="Fair / Minor Wear">Fair / Minor Wear</option>
+                  <option value="Calibrated">Calibrated & Certified</option>
+                </select>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label-custom">Special Remarks / Accessories</label>
+                <input type="text" name="remarks_on_issue" class="form-control-custom" placeholder="e.g. Issued with power adapter, HDMI cable, carrying case" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 3: Recipient / Custodian Details -->
+          <div class="mb-4">
+            <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">
+              <span class="badge bg-dark rounded-circle me-1">3</span> Recipient / Bearer Details (Issued To)
+            </h6>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label-custom">Recipient Full Name *</label>
+                <input type="text" name="issued_to_name" class="form-control-custom" placeholder="e.g. Rahul Sharma" required />
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label-custom">Roll No / Employee ID / ID Number</label>
+                <input type="text" name="issued_to_id_number" class="form-control-custom" placeholder="e.g. CS-2023-042 or EMP-108" />
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label-custom">Department / Division</label>
+                <input type="text" name="issued_to_dept" class="form-control-custom" placeholder="e.g. CSE 4th Year, ECE Lab, Admin" />
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label-custom">Contact Phone Number</label>
+                <input type="tel" name="issued_to_phone" class="form-control-custom" placeholder="e.g. +91 98765 43210" />
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label-custom">Email Address</label>
+                <input type="email" name="issued_to_email" class="form-control-custom" placeholder="e.g. rahul.sharma@institution.edu" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+            <a href="{{ url_for('issues.list_issues') }}" class="btn btn-outline-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary px-4">
+              <i class="bi bi-printer-fill me-1"></i>Generate Issue Slip (Parchi) & Gate Pass
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary / Live Issuer Context Column -->
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-header-custom">
+        <h4 class="card-title" style="font-size:14px">
+          <i class="bi bi-shield-check me-2" style="color:var(--emerald)"></i>Authorized Issuer Verification
+        </h4>
+      </div>
+      <div class="card-body-custom">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div style="width:44px;height:44px;background:var(--navy);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px">
+            <i class="bi bi-person-fill"></i>
+          </div>
+          <div>
+            <div class="fw-bold text-dark">{{ current_user.full_name or current_user.username }}</div>
+            <div class="text-muted" style="font-size:12px">Role: <b>{{ current_user.role.title() }}</b></div>
+            <div class="text-muted" style="font-size:12px">Dept: <b>{{ current_user.department.name if current_user.department else 'Central Admin' }}</b></div>
+          </div>
+        </div>
+
+        <div class="p-3" style="background:var(--bg);border-radius:var(--radius-sm);font-size:12px;line-height:1.6">
+          <div><i class="bi bi-clock-history me-1 text-muted"></i> <b>Issue Timestamp:</b> {{ now().strftime('%d %B %Y, %I:%M %p') }}</div>
+          <div><i class="bi bi-qr-code me-1 text-muted"></i> <b>Auto Verification:</b> QR code generated on slip</div>
+          <div><i class="bi bi-file-earmark-pdf me-1 text-muted"></i> <b>Gate Pass (Parchi):</b> Instant PDF & Print ready</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Security Instructions -->
+    <div class="card">
+      <div class="card-body-custom" style="font-size:12.5px;color:var(--ink-muted)">
+        <h6 class="fw-bold text-dark mb-2"><i class="bi bi-info-circle me-1" style="color:var(--gold)"></i>Gate Pass Policy</h6>
+        <ul class="ps-3 mb-0" style="display:flex;flex-direction:column;gap:6px">
+          <li>Bearer must carry printed or digital Parchi for security checkpoint inspection.</li>
+          <li>Issuer is accountable for verifying equipment state before dispatch.</li>
+          <li>Overdue alerts will trigger automatically upon due date expiration.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Budget & Cost Estimation{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Budget & Cost Estimation</h1>
+    <p class="page-subtitle">FY{{ current_year }} — Auto-computed from asset depreciation data</p>
+  </div>
+  {% if current_user.is_admin %}
+  <form action="{{ url_for('budget.save_estimates') }}" method="POST">
+    <button type="submit" class="btn btn-primary btn-sm">
+      <i class="bi bi-save me-1"></i>Save FY{{ current_year }} Estimates
+    </button>
+  </form>
+  {% endif %}
+</div>
+
+<!-- Grand Total Row -->
+<div class="stat-row stat-row-3" style="margin-bottom:24px">
+  <div class="stat-card-hero" style="min-height:120px">
+    <div>
+      <div class="stat-hero-label">Total Estimated Budget</div>
+      <div class="stat-hero-value" style="font-size:36px">₹{{ '{:,.0f}'.format(grand_total_estimated) }}</div>
+      <div class="stat-hero-sub">All departments · FY{{ current_year }}</div>
+    </div>
+    <i class="bi bi-wallet2 stat-hero-icon"></i>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-accent success"></div>
+    <div class="stat-card-label">Actual Spent</div>
+    <div class="stat-card-value" style="font-size:28px">₹{{ '{:,.0f}'.format(grand_total_actual) }}</div>
+    <i class="bi bi-check-circle stat-card-icon"></i>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-accent {{ 'danger' if grand_total_actual > grand_total_estimated else 'brass' }}"></div>
+    <div class="stat-card-label">Variance</div>
+    <div class="stat-card-value" style="font-size:28px;color:{{ 'var(--danger)' if grand_total_actual > grand_total_estimated else 'var(--success)' }}">
+      {{ '+' if grand_total_actual > grand_total_estimated else '−' }}₹{{ '{:,.0f}'.format((grand_total_actual - grand_total_estimated)|abs) }}
+    </div>
+    <i class="bi bi-graph-up stat-card-icon"></i>
+  </div>
+</div>
+
+<!-- Budget vs Actual Chart -->
+<div class="card" style="margin-bottom:24px">
+  <div class="card-header-custom">
+    <h3 class="card-title"><i class="bi bi-bar-chart-line me-2" style="color:var(--brass)"></i>Budget vs. Actual Spend by Department</h3>
+  </div>
+  <div class="card-body-custom" style="height:280px;position:relative">
+    <canvas id="budget-chart"
+      data-labels='{{ chart_labels | tojson }}'
+      data-estimated='{{ chart_estimated | tojson }}'
+      data-actual='{{ chart_actual | tojson }}'>
+    </canvas>
+  </div>
+</div>
+
+<!-- Department Table -->
+<div class="card">
+  <div class="card-header-custom">
+    <h3 class="card-title"><i class="bi bi-table me-2" style="color:var(--brass)"></i>Department Breakdown</h3>
+  </div>
+  <div style="overflow-x:auto">
+    <table class="table-custom">
+      <thead>
+        <tr>
+          <th>Department</th>
+          <th>Assets</th>
+          <th>Est. Maintenance (₹)</th>
+          <th>Est. Replacement (₹)</th>
+          <th>Total Estimated (₹)</th>
+          <th>Actual Spent (₹)</th>
+          <th>Variance (₹)</th>
+          <th>Budget %</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in dept_summaries %}
+        <tr>
+          <td>
+            <div style="font-weight:600;color:var(--navy)">{{ s.dept.name }}</div>
+            <small class="text-muted">{{ s.dept.code }}</small>
+          </td>
+          <td>{{ s.asset_count }}</td>
+          <td>₹{{ '{:,.0f}'.format(s.estimated_maintenance) }}</td>
+          <td>{{ '₹{:,.0f}'.format(s.estimated_replacement) if s.estimated_replacement > 0 else '—' }}</td>
+          <td style="font-weight:600">₹{{ '{:,.0f}'.format(s.total_estimated) }}</td>
+          <td>₹{{ '{:,.0f}'.format(s.actual_spent) }}</td>
+          <td>
+            <span style="color:{{ 'var(--danger)' if s.variance > 0 else 'var(--success)' }};font-weight:500">
+              {{ '+' if s.variance > 0 else '' }}₹{{ '{:,.0f}'.format(s.variance) }}
+            </span>
+          </td>
+          <td>
+            {% if s.total_estimated > 0 %}
+            {% set pct = [(s.actual_spent / s.total_estimated * 100), 100]|min %}
+            <div style="display:flex;align-items:center;gap:8px;min-width:80px">
+              <div class="risk-bar" style="flex:1"><div class="risk-bar-fill {{ 'risk-high' if pct > 90 else ('risk-medium' if pct > 70 else 'risk-low') }}" style="width:{{ pct }}%"></div></div>
+              <small style="font-size:10px;width:30px">{{ '{:.0f}%'.format(pct) }}</small>
+            </div>
+            {% else %}—{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

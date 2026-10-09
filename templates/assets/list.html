@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% block title %}Assets{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Asset Registry</h1>
+    <p class="page-subtitle">{{ assets.total }} asset{{ 's' if assets.total != 1 else '' }} found</p>
+  </div>
+  <div class="d-flex gap-2">
+    {% if not current_user.is_maintenance %}
+    <a href="{{ url_for('assets.create') }}" class="btn btn-primary btn-sm">
+      <i class="bi bi-plus-lg me-1"></i>New Asset
+    </a>
+    {% endif %}
+    {% if current_user.is_admin %}
+    <a href="{{ url_for('assets.import_csv') }}" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-upload me-1"></i>Bulk Import
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="card" style="margin-bottom:20px">
+  <div class="card-body-custom">
+    <form method="GET" class="d-flex flex-wrap gap-2 align-items-end">
+      <div style="flex:2;min-width:180px">
+        <label class="form-label-custom">Search</label>
+        <div style="position:relative">
+          <i class="bi bi-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--ink-muted);font-size:13px"></i>
+          <input type="text" name="q" value="{{ q }}" class="form-control-custom" style="padding-left:32px" placeholder="Name, tag, location, serial…" />
+        </div>
+      </div>
+      <div style="flex:1;min-width:130px">
+        <label class="form-label-custom">Department</label>
+        <select name="department" class="form-control-custom">
+          <option value="">All Departments</option>
+          {% for d in departments %}
+          <option value="{{ d.id }}" {{ 'selected' if dept_filter == d.id|string }}>{{ d.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="flex:1;min-width:120px">
+        <label class="form-label-custom">Status</label>
+        <select name="status" class="form-control-custom">
+          <option value="">All Statuses</option>
+          <option value="active" {{ 'selected' if status_filter == 'active' }}>Active</option>
+          <option value="under_repair" {{ 'selected' if status_filter == 'under_repair' }}>Under Repair</option>
+          <option value="damaged" {{ 'selected' if status_filter == 'damaged' }}>Damaged</option>
+          <option value="retired" {{ 'selected' if status_filter == 'retired' }}>Retired</option>
+        </select>
+      </div>
+      <div style="flex:1;min-width:130px">
+        <label class="form-label-custom">Category</label>
+        <select name="category" class="form-control-custom">
+          <option value="">All Categories</option>
+          {% for cat in ['Computer','Projector','Furniture','Lab Equipment','Networking','Electrical','HVAC','Vehicle','Other'] %}
+          <option value="{{ cat }}" {{ 'selected' if category_filter == cat }}>{{ cat }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+        <a href="{{ url_for('assets.list_assets') }}" class="btn btn-outline-primary btn-sm ms-1">Reset</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Assets Table -->
+<div class="card">
+  {% if assets.items %}
+  <div style="overflow-x:auto">
+    <table class="table-custom">
+      <thead>
+        <tr>
+          <th>Asset Tag</th>
+          <th>Name &amp; Location</th>
+          <th>Category</th>
+          <th>Department</th>
+          <th>Status</th>
+          <th>Purchase Date</th>
+          <th>Cost (₹)</th>
+          <th>Warranty</th>
+          <th>Risk</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in assets.items %}
+        <tr>
+          <td>
+            <a href="{{ url_for('assets.detail', asset_id=a.id) }}" style="font-family:var(--font-body);font-weight:600;color:var(--navy);font-size:12px">
+              {{ a.asset_tag }}
+            </a>
+          </td>
+          <td>
+            <div style="font-weight:500">{{ a.name }}</div>
+            <small class="text-muted"><i class="bi bi-geo-alt-fill me-1"></i>{{ a.location or '—' }}</small>
+          </td>
+          <td>
+            <span class="badge-pill badge-navy">{{ a.category }}</span>
+          </td>
+          <td>{{ a.department.name if a.department else '—' }}</td>
+          <td>
+            <span class="badge-pill {{ a.status_badge_class }}">
+              <span class="status-dot {{ 'success' if a.status=='active' else ('warning' if a.status=='under_repair' else ('danger' if a.status=='damaged' else 'secondary')) }}"></span>
+              {{ a.status_label }}
+            </span>
+          </td>
+          <td style="font-size:12px">{{ a.purchase_date.strftime('%d %b %Y') if a.purchase_date else '—' }}</td>
+          <td style="font-size:12px">₹{{ '{:,.0f}'.format(a.purchase_cost|float) if a.purchase_cost else '—' }}</td>
+          <td>
+            {% if a.warranty_expiry %}
+              {% set ws = a.warranty_status %}
+              <span class="badge-pill {{ 'badge-success' if ws == 'valid' else ('badge-warning' if ws == 'expiring_soon' else 'badge-danger') }}">
+                {{ 'Valid' if ws == 'valid' else ('Soon' if ws == 'expiring_soon' else 'Expired') }}
+              </span>
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            {% set rs = a.risk_score %}
+            <div style="display:flex;align-items:center;gap:6px;min-width:70px">
+              <div class="risk-bar {{ 'risk-low' if rs < 40 else ('risk-medium' if rs < 70 else 'risk-high') }}" style="flex:1">
+                <div class="risk-bar-fill" style="width:{{ rs }}%"></div>
+              </div>
+              <small style="font-size:10px;color:var(--ink-muted)">{{ rs }}</small>
+            </div>
+          </td>
+          <td>
+            <div class="d-flex gap-1">
+              <a href="{{ url_for('assets.detail', asset_id=a.id) }}" class="btn-icon" data-bs-toggle="tooltip" title="View">
+                <i class="bi bi-eye"></i>
+              </a>
+              {% if not current_user.is_maintenance %}
+              <a href="{{ url_for('assets.edit', asset_id=a.id) }}" class="btn-icon" data-bs-toggle="tooltip" title="Edit">
+                <i class="bi bi-pencil"></i>
+              </a>
+              {% endif %}
+              <a href="{{ url_for('maintenance.create') }}?asset_id={{ a.id }}" class="btn-icon" data-bs-toggle="tooltip" title="Log Maintenance">
+                <i class="bi bi-tools"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if assets.pages > 1 %}
+  <div style="padding:16px 20px;border-top:1px solid var(--hairline)">
+    <nav>
+      <ul class="pagination pagination-sm mb-0">
+        {% if assets.has_prev %}
+        <li class="page-item">
+          <a class="page-link" href="{{ url_for('assets.list_assets', page=assets.prev_num, q=q, department=dept_filter, status=status_filter, category=category_filter) }}">‹ Prev</a>
+        </li>
+        {% endif %}
+        {% for p in assets.iter_pages(left_edge=2, right_edge=2, left_current=2, right_current=2) %}
+          {% if p %}
+          <li class="page-item {{ 'active' if p == assets.page }}">
+            <a class="page-link" href="{{ url_for('assets.list_assets', page=p, q=q, department=dept_filter, status=status_filter, category=category_filter) }}">{{ p }}</a>
+          </li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
+        {% endfor %}
+        {% if assets.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="{{ url_for('assets.list_assets', page=assets.next_num, q=q, department=dept_filter, status=status_filter, category=category_filter) }}">Next ›</a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon"><i class="bi bi-box-seam"></i></div>
+    <div class="empty-title">No assets found</div>
+    <div class="empty-sub">
+      {% if q or dept_filter or status_filter or category_filter %}
+        Try adjusting your filters.
+      {% else %}
+        <a href="{{ url_for('assets.create') }}">Add your first asset →</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

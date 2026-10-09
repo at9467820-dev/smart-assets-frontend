@@ -1,0 +1,289 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Dashboard Overview</h1>
+    <p class="page-subtitle">Live summary of your campus asset registry</p>
+  </div>
+  {% if current_user.is_admin %}
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('assets.create') }}" class="btn btn-primary btn-sm">
+      <i class="bi bi-plus-lg me-1"></i>New Asset
+    </a>
+    <a href="{{ url_for('maintenance.create') }}" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-tools me-1"></i>Log Maintenance
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ── Human Welcome Banner ──────────────────────────────── -->
+<div class="human-banner">
+  <img src="{{ url_for('static', filename='img/team-collaboration.jpg') }}" class="human-banner-img" alt="Team at work" />
+  <div class="human-banner-overlay">
+    <div class="human-banner-text">
+      <h2>Your team keeps the campus running. 🎓</h2>
+      <p>Every asset tracked here supports real people — students, faculty &amp; staff working every day.</p>
+    </div>
+    <div class="human-banner-faces">
+      <div class="face">
+        <img src="{{ url_for('static', filename='img/avatar-admin.jpg') }}" alt="Admin" />
+      </div>
+      <div class="face">
+        <img src="{{ url_for('static', filename='img/avatar-staff.jpg') }}" alt="Staff" />
+      </div>
+      <div class="face">
+        <img src="{{ url_for('static', filename='img/avatar-maintenance.jpg') }}" alt="Maintenance" />
+      </div>
+      <div class="face-count">+{{ dept_labels|length }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Stat Row ─────────────────────────────────────────── -->
+<div class="stat-row stat-row-4">
+
+  <!-- Hero Card -->
+  <div class="stat-card-hero animate-in animate-in-1">
+    <div>
+      <div class="stat-hero-label">Total Assets Registered</div>
+      <div class="stat-hero-value" data-count="{{ total_assets }}">{{ total_assets }}</div>
+      <div class="stat-hero-sub">
+        Across {{ dept_labels|length }} departments
+      </div>
+    </div>
+    <i class="bi bi-box-seam stat-hero-icon"></i>
+  </div>
+
+  <!-- Smaller stat cards -->
+  <div class="stat-card animate-in animate-in-2">
+    <div class="stat-card-accent success"></div>
+    <div class="stat-card-label">Active</div>
+    <div class="stat-card-value" data-count="{{ active_assets }}">{{ active_assets }}</div>
+    <small class="text-muted">In service</small>
+    <i class="bi bi-check-circle stat-card-icon"></i>
+  </div>
+
+  <div class="stat-card animate-in animate-in-3">
+    <div class="stat-card-accent warning"></div>
+    <div class="stat-card-label">Under Repair</div>
+    <div class="stat-card-value" data-count="{{ under_repair }}">{{ under_repair }}</div>
+    <small class="text-muted">Being serviced</small>
+    <i class="bi bi-tools stat-card-icon"></i>
+  </div>
+
+  <div class="stat-card animate-in animate-in-4">
+    <div class="stat-card-accent brass"></div>
+    <div class="stat-card-label">Pending Maintenance</div>
+    <div class="stat-card-value" data-count="{{ pending_maintenance }}">{{ pending_maintenance }}</div>
+    <small class="text-muted">Requests awaiting</small>
+    <i class="bi bi-clock-history stat-card-icon"></i>
+  </div>
+
+</div>
+
+<!-- ── Secondary Stat Row ─────────────────────────────────── -->
+<div class="stat-row stat-row-3" style="margin-bottom:24px">
+  <div class="stat-card">
+    <div class="stat-card-accent danger"></div>
+    <div class="stat-card-label">Damaged</div>
+    <div class="stat-card-value">{{ damaged }}</div>
+    <small class="text-muted">Needs attention</small>
+    <i class="bi bi-exclamation-triangle stat-card-icon"></i>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-accent" style="background:var(--ink-muted)"></div>
+    <div class="stat-card-label">Retired</div>
+    <div class="stat-card-value">{{ retired }}</div>
+    <small class="text-muted">Decommissioned</small>
+    <i class="bi bi-archive stat-card-icon"></i>
+  </div>
+  <div class="stat-card stat-card-dark">
+    <div class="stat-card-label">High-Risk Assets</div>
+    <div class="stat-card-value">{{ high_risk|length }}</div>
+    <small>Risk score ≥ 60</small>
+    <i class="bi bi-shield-exclamation stat-card-icon"></i>
+  </div>
+</div>
+
+<!-- ── Two-Column: Chart + Alerts ─────────────────────────── -->
+<div class="two-col-6040" style="margin-bottom:24px">
+
+  <!-- Department Bar Chart -->
+  <div class="card">
+    <div class="card-header-custom">
+      <h3 class="card-title"><i class="bi bi-bar-chart-fill me-2" style="color:var(--brass)"></i>Assets by Department</h3>
+      <a href="{{ url_for('analysis.index') }}" class="btn btn-sm btn-outline-primary" style="font-size:12px">
+        Full Analysis →
+      </a>
+    </div>
+    <div class="card-body-custom" style="height:260px;position:relative">
+      <canvas id="dept-chart"
+        data-labels='{{ dept_labels | tojson }}'
+        data-values='{{ dept_counts | tojson }}'>
+      </canvas>
+    </div>
+  </div>
+
+  <!-- Alerts Panel -->
+  <div class="card">
+    <div class="card-header-custom">
+      <h3 class="card-title"><i class="bi bi-exclamation-circle-fill me-2" style="color:var(--danger)"></i>Alerts</h3>
+      <span class="badge-pill badge-danger">{{ (overdue_logs|length) + (expiring_warranties|length) + (high_risk|length) }}</span>
+    </div>
+    <div class="card-body-custom" style="max-height:300px;overflow-y:auto">
+
+      {% for log in overdue_logs %}
+      <div class="alert-item">
+        <div class="alert-icon-wrap danger"><i class="bi bi-tools"></i></div>
+        <div>
+          <p class="alert-title">Overdue Maintenance</p>
+          <p class="alert-sub">
+            {{ log.asset.name if log.asset else 'N/A' }} ·
+            Due {{ log.scheduled_date.strftime('%d %b') if log.scheduled_date else 'N/A' }}
+          </p>
+        </div>
+        <a href="{{ url_for('maintenance.detail', log_id=log.id) }}" class="btn-icon ms-auto">
+          <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+      {% endfor %}
+
+      {% for a in expiring_warranties %}
+      <div class="alert-item">
+        <div class="alert-icon-wrap warning"><i class="bi bi-shield-exclamation"></i></div>
+        <div>
+          <p class="alert-title">Warranty Expiring</p>
+          <p class="alert-sub">
+            {{ a.name }} · {{ a.warranty_expiry.strftime('%d %b %Y') }}
+          </p>
+        </div>
+        <a href="{{ url_for('assets.detail', asset_id=a.id) }}" class="btn-icon ms-auto">
+          <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+      {% endfor %}
+
+      {% for item in high_risk %}
+      <div class="alert-item">
+        <div class="alert-icon-wrap brass"><i class="bi bi-exclamation-triangle"></i></div>
+        <div>
+          <p class="alert-title">High Risk Asset</p>
+          <p class="alert-sub">
+            {{ item.name }} · Risk Score: {{ item.risk_score }}
+          </p>
+        </div>
+        <a href="{{ url_for('assets.detail', asset_id=item.id) }}" class="btn-icon ms-auto">
+          <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+      {% endfor %}
+
+      {% if not overdue_logs and not expiring_warranties and not high_risk %}
+      <div class="empty-state" style="padding:32px 16px">
+        <div class="empty-icon" style="font-size:32px">🎉</div>
+        <div class="empty-title" style="font-size:16px">All clear!</div>
+        <div class="empty-sub">No alerts at this time.</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- ── Recent Assets Table ────────────────────────────────── -->
+<div class="card">
+  <div class="card-header-custom">
+    <h3 class="card-title"><i class="bi bi-clock me-2" style="color:var(--brass)"></i>Recently Added Assets</h3>
+    <a href="{{ url_for('assets.list_assets') }}" class="btn btn-sm btn-outline-primary" style="font-size:12px">
+      View All →
+    </a>
+  </div>
+  <div style="overflow-x:auto">
+    <table class="table-custom">
+      <thead>
+        <tr>
+          <th>Asset Tag</th>
+          <th>Name</th>
+          <th>Category</th>
+          <th>Department</th>
+          <th>Status</th>
+          <th>Risk</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in recent_assets %}
+        <tr>
+          <td>
+            <span class="badge-pill badge-navy" style="font-family:var(--font-body);letter-spacing:0.04em">
+              {{ a.asset_tag }}
+            </span>
+          </td>
+          <td>
+            <div style="font-weight:500;color:var(--navy)">{{ a.name }}</div>
+            <small class="text-muted">{{ a.location or '—' }}</small>
+          </td>
+          <td>{{ a.category }}</td>
+          <td>{{ a.department.name if a.department else '—' }}</td>
+          <td>
+            <span class="badge-pill {{ a.status_badge_class }}">
+              <span class="status-dot {{ 'success' if a.status=='active' else ('warning' if a.status=='under_repair' else ('danger' if a.status=='damaged' else 'secondary')) }}"></span>
+              {{ a.status_label }}
+            </span>
+          </td>
+          <td>
+            {% set rs = a.risk_score %}
+            <div style="display:flex;align-items:center;gap:8px;min-width:80px">
+              <div class="risk-bar {{ 'risk-low' if rs < 40 else ('risk-medium' if rs < 70 else 'risk-high') }}" style="flex:1">
+                <div class="risk-bar-fill" style="width:{{ rs }}%"></div>
+              </div>
+              <small style="font-size:10px;color:var(--ink-muted);width:24px">{{ rs }}</small>
+            </div>
+          </td>
+          <td>
+            <a href="{{ url_for('assets.detail', asset_id=a.id) }}" class="btn-icon">
+              <i class="bi bi-eye"></i>
+            </a>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="text-center text-muted py-4">No assets yet.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── Activity Feed (Admin only) ────────────────────────── -->
+{% if current_user.is_admin and recent_activity %}
+<div class="card" style="margin-top:20px">
+  <div class="card-header-custom">
+    <h3 class="card-title"><i class="bi bi-activity me-2" style="color:var(--brass)"></i>Recent Activity</h3>
+  </div>
+  <div class="card-body-custom">
+    <div class="timeline">
+      {% for log in recent_activity %}
+      <div class="timeline-item">
+        <div class="timeline-dot {{ 'success' if log.action == 'CREATE' else ('danger' if log.action == 'DELETE' else 'warning') }}"></div>
+        <div class="timeline-date">{{ log.timestamp.strftime('%d %b %Y, %H:%M') }}</div>
+        <div class="timeline-title">{{ log.action }} {{ log.entity_type }}</div>
+        <div class="timeline-desc">{{ log.description or '' }} · by {{ log.user.username if log.user else 'System' }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Inject maintenance trend data for chart
+</script>
+{% endblock %}

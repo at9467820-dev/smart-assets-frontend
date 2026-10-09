@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Allocation History{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Allocation History</h1>
+    <p class="page-subtitle">Track every asset reallocation and department transfer</p>
+  </div>
+</div>
+
+<!-- Filter -->
+<div class="card" style="margin-bottom:20px">
+  <div class="card-body-custom">
+    <form method="GET" class="d-flex gap-2 align-items-end flex-wrap">
+      <div style="flex:1;min-width:160px">
+        <label class="form-label-custom">Filter by Department</label>
+        <select name="department" class="form-control-custom">
+          <option value="">All Departments</option>
+          {% for d in departments %}
+          <option value="{{ d.id }}" {{ 'selected' if dept_filter == d.id|string }}>{{ d.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+        <a href="{{ url_for('allocations.index') }}" class="btn btn-outline-primary btn-sm ms-1">Reset</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Table -->
+<div class="card">
+  {% if allocations.items %}
+  <div style="overflow-x:auto">
+    <table class="table-custom">
+      <thead>
+        <tr>
+          <th>Asset</th>
+          <th>From Dept.</th>
+          <th>To Dept.</th>
+          <th>From User</th>
+          <th>To User</th>
+          <th>Allocated By</th>
+          <th>Date</th>
+          <th>Reason</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in allocations.items %}
+        <tr>
+          <td>
+            {% if a.asset %}
+            <a href="{{ url_for('assets.detail', asset_id=a.asset.id) }}" style="font-weight:600;color:var(--navy);font-size:12px">
+              {{ a.asset.asset_tag }}
+            </a>
+            <div style="font-size:11px;color:var(--ink-muted)">{{ a.asset.name[:30] if a.asset.name else '' }}</div>
+            {% else %}—{% endif %}
+          </td>
+          <td>{{ a.from_department.name if a.from_department else '—' }}</td>
+          <td style="font-weight:500;color:var(--navy)">{{ a.to_department.name if a.to_department else '—' }}</td>
+          <td style="font-size:12px">{{ a.from_user.full_name if a.from_user else '—' }}</td>
+          <td style="font-size:12px">{{ a.to_user.full_name if a.to_user else '—' }}</td>
+          <td style="font-size:12px">{{ a.allocated_by.full_name if a.allocated_by else '—' }}</td>
+          <td style="font-size:12px">{{ a.allocation_date.strftime('%d %b %Y') if a.allocation_date else '—' }}</td>
+          <td style="font-size:12px;max-width:160px">{{ (a.reason or '—')[:50] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if allocations.pages > 1 %}
+  <div style="padding:16px 20px;border-top:1px solid var(--hairline)">
+    <nav>
+      <ul class="pagination pagination-sm mb-0">
+        {% if allocations.has_prev %}<li class="page-item"><a class="page-link" href="?page={{ allocations.prev_num }}&department={{ dept_filter }}">‹</a></li>{% endif %}
+        {% for p in allocations.iter_pages() %}
+          {% if p %}<li class="page-item {{ 'active' if p == allocations.page }}"><a class="page-link" href="?page={{ p }}&department={{ dept_filter }}">{{ p }}</a></li>
+          {% else %}<li class="page-item disabled"><span class="page-link">…</span></li>{% endif %}
+        {% endfor %}
+        {% if allocations.has_next %}<li class="page-item"><a class="page-link" href="?page={{ allocations.next_num }}&department={{ dept_filter }}">›</a></li>{% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon"><i class="bi bi-arrow-left-right"></i></div>
+    <div class="empty-title">No allocation records</div>
+    <div class="empty-sub">Allocation history will appear here when assets are reallocated.</div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

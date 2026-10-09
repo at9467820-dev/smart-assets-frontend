@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Gate Pass #{{ issue.slip_number }} — Official Issue Slip</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 10mm;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      margin: 0;
+      padding: 10px;
+      color: #0f172a;
+      background: #fff;
+    }
+    .parchi-card {
+      border: 2px solid #091a17;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+      box-sizing: border-box;
+    }
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #091a17;
+      padding-bottom: 12px;
+      margin-bottom: 15px;
+    }
+    .brand-title {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: #091a17;
+      text-transform: uppercase;
+    }
+    .brand-sub {
+      font-size: 11px;
+      color: #475569;
+      margin-top: 2px;
+    }
+    .slip-badge {
+      text-align: right;
+    }
+    .slip-no {
+      font-size: 16px;
+      font-weight: 800;
+      font-family: monospace;
+      color: #10b981;
+    }
+    .banner {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      text-align: center;
+      padding: 6px;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-bottom: 15px;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    .section-title {
+      background: #091a17;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 8px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    table td {
+      padding: 4px 6px;
+      border-bottom: 1px solid #e2e8f0;
+      vertical-align: top;
+    }
+    table td.lbl {
+      color: #475569;
+      font-weight: 600;
+      width: 40%;
+    }
+    table td.val {
+      color: #0f172a;
+    }
+    .terms-box {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      padding: 8px 10px;
+      font-size: 10px;
+      color: #475569;
+      line-height: 1.4;
+      margin-bottom: 20px;
+    }
+    .sig-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 15px;
+      margin-top: 30px;
+      text-align: center;
+    }
+    .sig-box {
+      border: 1px solid #cbd5e1;
+      padding: 10px;
+    }
+    .sig-line {
+      height: 40px;
+      border-bottom: 1px dashed #64748b;
+      margin-bottom: 6px;
+    }
+    .sig-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #091a17;
+    }
+    .sig-sub {
+      font-size: 9px;
+      color: #64748b;
+    }
+    .print-controls {
+      max-width: 800px;
+      margin: 0 auto 15px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    .btn {
+      padding: 8px 16px;
+      font-size: 13px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      border: none;
+    }
+    .btn-print {
+      background: #091a17;
+      color: #fff;
+    }
+    .btn-close {
+      background: #e2e8f0;
+      color: #334155;
+    }
+    @media print {
+      .print-controls {
+        display: none !important;
+      }
+      body {
+        padding: 0;
+      }
+      .parchi-card {
+        border: 2px solid #000;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Controls (Hidden during print) -->
+  <div class="print-controls">
+    <button class="btn btn-close" onclick="window.close()">Close</button>
+    <button class="btn btn-print" onclick="window.print()">🖨️ Print Gate Pass (Parchi)</button>
+  </div>
+
+  <div class="parchi-card">
+    <!-- Header -->
+    <div class="header-row">
+      <div>
+        <div class="brand-title">AssetPulse Institutional Registry</div>
+        <div class="brand-sub">Smart Asset Management System (SAMS) • Material Issue & Custody Clearance</div>
+      </div>
+      <div class="slip-badge">
+        <div style="font-size:10px;color:#64748b;font-weight:700">SLIP / GATE PASS NO.</div>
+        <div class="slip-no">{{ issue.slip_number }}</div>
+        <div style="font-size:10px;color:#091a17;font-weight:600">{{ issue.gate_pass_type.upper() }}</div>
+      </div>
+    </div>
+
+    <!-- Banner -->
+    <div class="banner">
+      OFFICIAL MATERIAL ISSUE SLIP & SECURITY GATE PASS (PARCHI)
+    </div>
+
+    <!-- 2 Columns -->
+    <div class="grid-2">
+      <!-- Recipient & Authorization -->
+      <div>
+        <div class="section-title">Recipient & Authorization Details</div>
+        <table>
+          <tr>
+            <td class="lbl">Issued To (Bearer):</td>
+            <td class="val"><b>{{ issue.issued_to_name }}</b></td>
+          </tr>
+          <tr>
+            <td class="lbl">ID / Roll Number:</td>
+            <td class="val">{{ issue.issued_to_id_number or 'N/A' }}</td>
+          </tr>
+          <tr>
+            <td class="lbl">Department / Class:</td>
+            <td class="val">{{ issue.issued_to_dept or 'N/A' }}</td>
+          </tr>
+          <tr>
+            <td class="lbl">Contact Number:</td>
+            <td class="val">{{ issue.issued_to_phone or 'N/A' }}</td>
+          </tr>
+          <tr>
+            <td class="lbl">Email Address:</td>
+            <td class="val">{{ issue.issued_to_email or 'N/A' }}</td>
+          </tr>
+          <tr>
+            <td class="lbl">Authorized Issuer:</td>
+            <td class="val"><b>{{ issue.issuer_name or (issue.issued_by.full_name if issue.issued_by else 'Admin') }}</b></td>
+          </tr>
+          <tr>
+            <td class="lbl">Issuer Designation:</td>
+            <td class="val">{{ issue.issued_by.role.title() if issue.issued_by else 'Staff' }} • {{ issue.issued_by.department.name if (issue.issued_by and issue.issued_by.department) else 'Administration' }}</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Equipment Details -->
+      <div>
+        <div class="section-title">Equipment & Material Specifications</div>
+        <table>
+          <tr>
+            <td class="lbl">Asset Tag:</td>
+            <td class="val"><b>{{ issue.asset.asset_tag }}</b></td>
+          </tr>
+          <tr>
+            <td class="lbl">Equipment Name:</td>
+            <td class="val"><b>{{ issue.asset.name }}</b></td>
+          </tr>
+          <tr>
+            <td class="lbl">Category:</td>
+            <td class="val">{{ issue.asset.category }}</td>
+          </tr>
+          <tr>
+            <td class="lbl">Serial Number:</td>
+            <td class="val"><code>{{ issue.asset.serial_number or 'N/A' }}</code></td>
+          </tr>
+          <tr>
+            <td class="lbl">Location / Lab:</td>
+            <td class="val">{{ issue.asset.location or 'Main Lab' }}</td>
+          </tr>
+          <tr>
+            <td class="lbl">Issue Date & Time:</td>
+            <td class="val"><b>{{ issue.issue_date.strftime('%d-%m-%Y %I:%M %p') }}</b></td>
+          </tr>
+          <tr>
+            <td class="lbl">Expected Due Date:</td>
+            <td class="val" style="color:#b98a2e"><b>{{ issue.expected_return_date.strftime('%d-%m-%Y %I:%M %p') if issue.expected_return_date else 'Permanent / Consumable' }}</b></td>
+          </tr>
+          <tr>
+            <td class="lbl">Condition on Issue:</td>
+            <td class="val">{{ issue.issue_condition or 'Good' }}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Purpose -->
+    <table>
+      <tr>
+        <td class="lbl" style="width:20%">Purpose of Issue:</td>
+        <td class="val"><b>{{ issue.purpose }}</b></td>
+      </tr>
+      <tr>
+        <td class="lbl">Remarks / Items:</td>
+        <td class="val">{{ issue.remarks_on_issue or 'Standard equipment handover.' }}</td>
+      </tr>
+    </table>
+    <br/>
+
+    <!-- Terms -->
+    <div class="terms-box">
+      <b>CUSTODY TERMS & DECLARATION:</b> 1. The recipient acknowledges receipt of the material in good condition. 2. The bearer is responsible for safe custody and handling. 3. The equipment must be returned on or before the due date. 4. Security personnel are authorized to check this gate pass at checkpoints.
+    </div>
+
+    <!-- Triple Signature Blocks -->
+    <div class="sig-grid">
+      <div class="sig-box">
+        <div class="sig-line"></div>
+        <div class="sig-title">ISSUING AUTHORITY</div>
+        <div class="sig-sub">Authorized Signature & Seal</div>
+      </div>
+      <div class="sig-box">
+        <div class="sig-line"></div>
+        <div class="sig-title">RECEIVER / BEARER</div>
+        <div class="sig-sub">Recipient Signature & Date</div>
+      </div>
+      <div class="sig-box">
+        <div class="sig-line"></div>
+        <div class="sig-title">SECURITY GATE</div>
+        <div class="sig-sub">Checkpoint Stamp & Initials</div>
+      </div>
+    </div>
+
+    <div style="text-align:center;font-size:9px;color:#94a3b8;margin-top:15px">
+      AssetPulse SAMS Automated Gate Pass System • Slip ID: {{ issue.slip_number }} • Printed on {{ now().strftime('%d-%m-%Y %H:%M:%S') }}
+    </div>
+  </div>
+
+  <script>
+    // Auto-trigger print dialog after render
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        window.print();
+      }, 500);
+    });
+  </script>
+</body>
+</html>

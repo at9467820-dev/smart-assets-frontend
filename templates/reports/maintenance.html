@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Maintenance Report{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Maintenance Report</h1>
+    <p class="page-subtitle">{{ logs|length }} records</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('reports.maintenance', format='pdf') }}" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-file-earmark-pdf me-1"></i>Export PDF
+    </a>
+    <a href="{{ url_for('reports.maintenance', format='excel') }}" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-file-earmark-excel me-1"></i>Export Excel
+    </a>
+  </div>
+</div>
+
+<div class="card">
+  <div style="overflow-x:auto">
+    <table class="table-custom">
+      <thead>
+        <tr>
+          <th>#</th><th>Asset</th><th>Issue</th><th>Status</th><th>Priority</th>
+          <th>Requested</th><th>Completed</th><th>Est. Cost (₹)</th><th>Actual Cost (₹)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td><a href="{{ url_for('maintenance.detail', log_id=log.id) }}" style="font-weight:600;color:var(--navy)">#{{ log.id }}</a></td>
+          <td>
+            {% if log.asset %}<div style="font-weight:500">{{ log.asset.asset_tag }}</div>
+            <small class="text-muted">{{ log.asset.name[:25] }}</small>{% else %}—{% endif %}
+          </td>
+          <td style="max-width:160px;font-size:12.5px">{{ (log.issue_description or '')[:50] }}</td>
+          <td><span class="badge-pill {{ 'badge-success' if log.status=='resolved' else ('badge-warning' if log.status=='in_progress' else 'badge-secondary') }}">{{ log.status.replace('_',' ').title() }}</span></td>
+          <td><span class="badge-pill {{ 'badge-danger' if log.priority in ('critical','high') else 'badge-info' }}">{{ (log.priority or '').title() }}</span></td>
+          <td style="font-size:12px">{{ log.request_date.strftime('%d %b %Y') if log.request_date else '—' }}</td>
+          <td style="font-size:12px">{{ log.completed_date.strftime('%d %b %Y') if log.completed_date else '—' }}</td>
+          <td>₹{{ '{:,.0f}'.format(log.estimated_cost|float) if log.estimated_cost else '—' }}</td>
+          <td>₹{{ '{:,.0f}'.format(log.actual_cost|float) if log.actual_cost else '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

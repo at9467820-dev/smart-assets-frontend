@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Inventory Report{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Inventory Report</h1>
+    <p class="page-subtitle">{{ assets|length }} assets matching current filters</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{{ url_for('reports.inventory', format='pdf', department=request.args.get('department',''), status=request.args.get('status',''), category=request.args.get('category','')) }}" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-file-earmark-pdf me-1"></i>Export PDF
+    </a>
+    <a href="{{ url_for('reports.inventory', format='excel', department=request.args.get('department',''), status=request.args.get('status',''), category=request.args.get('category','')) }}" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-file-earmark-excel me-1"></i>Export Excel
+    </a>
+    <a href="{{ url_for('reports.inventory', format='csv', department=request.args.get('department',''), status=request.args.get('status',''), category=request.args.get('category','')) }}" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-filetype-csv me-1"></i>Export CSV
+    </a>
+  </div>
+</div>
+
+<!-- Quick Filters -->
+<div class="card" style="margin-bottom:20px">
+  <div class="card-body-custom">
+    <form method="GET" class="d-flex flex-wrap gap-2 align-items-end">
+      <div style="flex:1;min-width:140px">
+        <label class="form-label-custom">Department</label>
+        <select name="department" class="form-control-custom">
+          <option value="">All</option>
+          {% for d in departments %}
+          <option value="{{ d.id }}" {{ 'selected' if request.args.get('department')==d.id|string }}>{{ d.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="flex:1;min-width:120px">
+        <label class="form-label-custom">Status</label>
+        <select name="status" class="form-control-custom">
+          <option value="">All</option>
+          <option value="active">Active</option>
+          <option value="under_repair">Under Repair</option>
+          <option value="damaged">Damaged</option>
+          <option value="retired">Retired</option>
+        </select>
+      </div>
+      <div style="flex:1;min-width:120px">
+        <label class="form-label-custom">Category</label>
+        <select name="category" class="form-control-custom">
+          <option value="">All</option>
+          {% for c in ['Computer','Projector','Furniture','Lab Equipment','Networking','Electrical','HVAC','Vehicle','Other'] %}
+          <option value="{{ c }}">{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div><button type="submit" class="btn btn-primary btn-sm">Apply</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div style="overflow-x:auto">
+    <table class="table-custom">
+      <thead>
+        <tr>
+          <th>Asset Tag</th>
+          <th>Name</th>
+          <th>Category</th>
+          <th>Department</th>
+          <th>Status</th>
+          <th>Purchase Date</th>
+          <th>Cost (₹)</th>
+          <th>Book Value (₹)</th>
+          <th>Warranty</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in assets %}
+        <tr>
+          <td><a href="{{ url_for('assets.detail', asset_id=a.id) }}" style="font-weight:600;color:var(--navy);font-size:12px">{{ a.asset_tag }}</a></td>
+          <td style="font-weight:500">{{ a.name }}</td>
+          <td>{{ a.category }}</td>
+          <td>{{ a.department.name if a.department else '—' }}</td>
+          <td><span class="badge-pill {{ a.status_badge_class }}">{{ a.status_label }}</span></td>
+          <td style="font-size:12px">{{ a.purchase_date.strftime('%d/%m/%Y') if a.purchase_date else '—' }}</td>
+          <td style="font-size:12px">₹{{ '{:,.0f}'.format(a.purchase_cost|float) if a.purchase_cost else '—' }}</td>
+          <td style="font-size:12px">₹{{ '{:,.0f}'.format(a.age_years and a.purchase_cost|float or 0) }}</td>
+          <td>
+            {% if a.warranty_expiry %}
+              <span class="badge-pill {{ 'badge-success' if a.warranty_status=='valid' else ('badge-warning' if a.warranty_status=='expiring_soon' else 'badge-danger') }}">
+                {{ a.warranty_expiry.strftime('%d/%m/%Y') }}
+              </span>
+            {% else %}—{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

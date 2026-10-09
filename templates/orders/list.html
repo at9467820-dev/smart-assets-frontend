@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}Procurement & New Asset Orders{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+  <div>
+    <h1 class="page-title">
+      <i class="bi bi-cart-check-fill me-2" style="color:var(--emerald)"></i>Asset & Material Procurement Orders
+    </h1>
+    <p class="page-subtitle">Manage new asset requisitions, replacement parts, and purchase order tracking</p>
+  </div>
+  <div>
+    <a href="{{ url_for('orders.create') }}" class="btn btn-primary btn-sm">
+      <i class="bi bi-plus-circle-fill me-1"></i>New Purchase Requisition
+    </a>
+  </div>
+</div>
+
+<!-- ── Filters ───────────────────────────────────────────── -->
+<div class="card mb-4">
+  <div class="card-body-custom py-3">
+    <form action="{{ url_for('orders.list_orders') }}" method="GET" class="d-flex gap-3 align-items-center flex-wrap">
+      
+      <div>
+        <select name="status" class="form-select-custom form-select-sm" onchange="this.form.submit()">
+          <option value="">All Statuses</option>
+          <option value="pending" {{ 'selected' if status_filter == 'pending' }}>Pending Approval</option>
+          <option value="approved" {{ 'selected' if status_filter == 'approved' }}>Approved</option>
+          <option value="ordered" {{ 'selected' if status_filter == 'ordered' }}>Ordered / In Transit</option>
+          <option value="received" {{ 'selected' if status_filter == 'received' }}>Received / Delivered</option>
+          <option value="cancelled" {{ 'selected' if status_filter == 'cancelled' }}>Cancelled</option>
+        </select>
+      </div>
+
+      <div>
+        <select name="priority" class="form-select-custom form-select-sm" onchange="this.form.submit()">
+          <option value="">All Priorities</option>
+          <option value="low" {{ 'selected' if priority_filter == 'low' }}>Low</option>
+          <option value="medium" {{ 'selected' if priority_filter == 'medium' }}>Medium</option>
+          <option value="high" {{ 'selected' if priority_filter == 'high' }}>High</option>
+          <option value="critical" {{ 'selected' if priority_filter == 'critical' }}>Critical</option>
+        </select>
+      </div>
+
+      {% if current_user.is_admin %}
+      <div>
+        <select name="department" class="form-select-custom form-select-sm" onchange="this.form.submit()">
+          <option value="">All Departments</option>
+          {% for d in departments %}
+          <option value="{{ d.id }}" {{ 'selected' if dept_filter|string == d.id|string }}>{{ d.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endif %}
+
+      {% if status_filter or priority_filter or dept_filter %}
+      <a href="{{ url_for('orders.list_orders') }}" class="btn btn-sm btn-outline-secondary">Clear Filters</a>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<!-- ── Orders Table ──────────────────────────────────────── -->
+<div class="card">
+  <div class="table-responsive">
+    <table class="table-custom">
+      <thead>
+        <tr>
+          <th>Order #</th>
+          <th>Item / Material Requested</th>
+          <th>Category</th>
+          <th>Department</th>
+          <th>Qty</th>
+          <th>Est. Total (₹)</th>
+          <th>Priority</th>
+          <th>Status</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for o in orders.items %}
+        <tr>
+          <td>
+            <span class="fw-bold" style="font-family:monospace;color:var(--navy)">{{ o.order_number }}</span>
+            <div class="text-muted" style="font-size:11px">{{ o.order_date.strftime('%d %b %Y') if o.order_date else '' }}</div>
+          </td>
+          <td>
+            <div class="fw-bold text-dark">{{ o.item_name }}</div>
+            <div class="text-muted" style="font-size:11px">
+              Req by: <b>{{ o.requested_by.full_name if o.requested_by else 'Staff' }}</b>
+              {% if o.supplier_name %} • Vendor: {{ o.supplier_name }}{% endif %}
+            </div>
+          </td>
+          <td>{{ o.category }}</td>
+          <td>{{ o.department.name if o.department else 'N/A' }}</td>
+          <td><b>{{ o.quantity }}</b></td>
+          <td><b>₹{{ "{:,.2f}".format(o.total_cost|float) }}</b></td>
+          <td>
+            <span class="badge {{ 'bg-danger' if o.priority == 'critical' else ('bg-warning text-dark' if o.priority == 'high' else 'bg-secondary') }}">
+              {{ o.priority.title() }}
+            </span>
+          </td>
+          <td>
+            <span class="badge {{ o.status_badge_class }}">
+              {{ o.status.title() }}
+            </span>
+          </td>
+          <td class="text-end">
+            {% if current_user.is_admin or current_user.is_maintenance %}
+            <div class="dropdown d-inline-block">
+              <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                Update Status
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                  <form action="{{ url_for('orders.update_status', order_id=o.id) }}" method="POST">
+                    <input type="hidden" name="status" value="approved">
+                    <button type="submit" class="dropdown-item text-info"><i class="bi bi-check-lg me-2"></i>Approve Requisition</button>
+                  </form>
+                </li>
+                <li>
+                  <form action="{{ url_for('orders.update_status', order_id=o.id) }}" method="POST">
+                    <input type="hidden" name="status" value="ordered">
+                    <button type="submit" class="dropdown-item text-primary"><i class="bi bi-truck me-2"></i>Mark as Ordered / Placed</button>
+                  </form>
+                </li>
+                <li>
+                  <form action="{{ url_for('orders.update_status', order_id=o.id) }}" method="POST">
+                    <input type="hidden" name="status" value="received">
+                    <button type="submit" class="dropdown-item text-success"><i class="bi bi-box-seam me-2"></i>Mark as Received / Delivered</button>
+                  </form>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <form action="{{ url_for('orders.update_status', order_id=o.id) }}" method="POST">
+                    <input type="hidden" name="status" value="cancelled">
+                    <button type="submit" class="dropdown-item text-danger"><i class="bi bi-x-circle me-2"></i>Cancel Order</button>
+                  </form>
+                </li>
+              </ul>
+            </div>
+            {% else %}
+            <span class="text-muted" style="font-size:12px">View Only</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="9" class="text-center py-5 text-muted">
+            <i class="bi bi-cart-x fs-1 d-block mb-2 opacity-50"></i>
+            No procurement orders found.
+            <div class="mt-2">
+              <a href="{{ url_for('orders.create') }}" class="btn btn-sm btn-primary">Create Purchase Requisition</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

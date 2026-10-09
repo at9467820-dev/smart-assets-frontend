@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Smart QR Asset Scanner & Action Hub{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">
+      <i class="bi bi-qr-code-scan me-2" style="color:var(--emerald)"></i>Smart QR Asset Scanner & Action Hub
+    </h1>
+    <p class="page-subtitle">Scan any asset QR code to issue material (generate parchi), send for maintenance, or check in returns</p>
+  </div>
+</div>
+
+<div style="max-width:580px;margin:0 auto">
+
+  <div class="card mb-4">
+    <div class="card-header-custom">
+      <h3 class="card-title"><i class="bi bi-camera me-2" style="color:var(--gold)"></i>Camera QR Scanner</h3>
+      <div class="d-flex gap-2">
+        <button id="start-scan" class="btn btn-primary btn-sm">
+          <i class="bi bi-camera me-1"></i>Start Camera
+        </button>
+        <button id="stop-scan" class="btn btn-outline-primary btn-sm d-none">
+          <i class="bi bi-stop-circle me-1"></i>Stop Camera
+        </button>
+      </div>
+    </div>
+    <div class="card-body-custom">
+
+      <!-- Scanner viewport -->
+      <div id="qr-reader" style="width:100%;border-radius:var(--radius-sm);overflow:hidden;border:2px dashed var(--hairline);min-height:280px;display:flex;align-items:center;justify-content:center;background:var(--bg)" data-autostart="false">
+        <div style="text-align:center;color:var(--ink-muted);padding:30px 20px">
+          <i class="bi bi-qr-code-scan" style="font-size:48px;opacity:0.3;display:block;margin-bottom:12px;color:var(--navy)"></i>
+          <div style="font-size:14px;font-weight:600;color:var(--navy)">Press "Start Camera" to begin scanning</div>
+          <div style="font-size:12px;margin-top:4px;opacity:0.7">Point your camera at any AssetPulse QR code label</div>
+        </div>
+      </div>
+
+      <!-- Scanned Hub Overlay -->
+      <div id="scan-result" style="margin-top:16px"></div>
+
+      <!-- Manual Tag Lookup -->
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--hairline)">
+        <p style="font-size:12px;color:var(--ink-muted);margin-bottom:10px">
+          <i class="bi bi-keyboard me-1"></i>
+          Or enter an asset tag / QR code manually:
+        </p>
+        <div class="d-flex gap-2">
+          <input type="text" id="manual-tag-input" class="form-control-custom" placeholder="e.g. CSE-001 or asset ID" style="flex:1" />
+          <button type="button" id="manual-lookup-btn" class="btn btn-primary btn-sm px-3">
+            <i class="bi bi-lightning-charge me-1"></i>Lookup
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Smart Quick Actions Flow Explanation -->
+  <div class="card">
+    <div class="card-body-custom">
+      <h6 style="font-family:var(--font-heading);color:var(--navy);margin-bottom:14px">
+        <i class="bi bi-stars me-1" style="color:var(--gold)"></i>Instant QR Workflow Actions
+      </h6>
+      <div class="row g-3">
+        <div class="col-sm-6">
+          <div class="p-3" style="background:var(--bg);border-radius:var(--radius-sm)">
+            <div class="fw-bold text-dark" style="font-size:13px">
+              <i class="bi bi-file-earmark-plus text-success me-1"></i> Issue Material & Parchi
+            </div>
+            <div class="text-muted" style="font-size:11.5px;margin-top:3px">
+              Immediately create a gate pass voucher with issuer timestamp & recipient custody.
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6">
+          <div class="p-3" style="background:var(--bg);border-radius:var(--radius-sm)">
+            <div class="fw-bold text-dark" style="font-size:13px">
+              <i class="bi bi-tools text-primary me-1"></i> Maintenance Request
+            </div>
+            <div class="text-muted" style="font-size:11.5px;margin-top:3px">
+              Send asset to repair workshop and notify assigned technician.
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6">
+          <div class="p-3" style="background:var(--bg);border-radius:var(--radius-sm)">
+            <div class="fw-bold text-dark" style="font-size:13px">
+              <i class="bi bi-box-arrow-in-down-left text-info me-1"></i> Return Asset Check-In
+            </div>
+            <div class="text-muted" style="font-size:11.5px;margin-top:3px">
+              Inspect returned condition and generate Return Clearance Receipt.
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6">
+          <div class="p-3" style="background:var(--bg);border-radius:var(--radius-sm)">
+            <div class="fw-bold text-dark" style="font-size:13px">
+              <i class="bi bi-cart-plus text-warning me-1"></i> Order Replacement Parts
+            </div>
+            <div class="text-muted" style="font-size:11.5px;margin-top:3px">
+              Submit procurement requisition for new units or consumable spares.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- html5-qrcode library -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="{{ url_for('static', filename='js/scanner.js') }}"></script>
+{% endblock %}

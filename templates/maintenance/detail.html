@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% block title %}Maintenance #{{ log.id }}{% endblock %}
+
+{% block content %}
+<nav style="margin-bottom:16px;font-size:12px;color:var(--ink-muted)">
+  <a href="{{ url_for('maintenance.list_logs') }}" style="color:var(--ink-muted)">Maintenance</a>
+  <span class="mx-2">›</span>
+  <span style="color:var(--navy)">Request #{{ log.id }}</span>
+</nav>
+
+<div class="page-header">
+  <div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+      <span class="badge-pill {{ 'badge-success' if log.status=='resolved' else ('badge-warning' if log.status=='in_progress' else ('badge-danger' if log.status=='cancelled' else 'badge-secondary')) }}">
+        {{ log.status.replace('_',' ').title() }}
+      </span>
+      <span class="badge-pill {{ 'badge-danger' if log.priority=='critical' else ('badge-warning' if log.priority=='high' else 'badge-info') }}">
+        {{ (log.priority or 'medium').title() }} Priority
+      </span>
+      {% if log.is_overdue %}<span class="badge-pill badge-danger">OVERDUE</span>{% endif %}
+    </div>
+    <h1 class="page-title">Maintenance Request #{{ log.id }}</h1>
+    <p class="page-subtitle">
+      Asset: <a href="{{ url_for('assets.detail', asset_id=log.asset.id) }}" style="color:var(--navy);font-weight:600">
+        {{ log.asset.asset_tag if log.asset else 'N/A' }} — {{ log.asset.name if log.asset else '' }}
+      </a>
+    </p>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start">
+
+  <!-- Left: Details + Update Form -->
+  <div style="display:flex;flex-direction:column;gap:20px">
+
+    <!-- Details -->
+    <div class="card">
+      <div class="card-header-custom">
+        <h3 class="card-title"><i class="bi bi-info-circle me-2" style="color:var(--brass)"></i>Request Details</h3>
+      </div>
+      <div class="card-body-custom">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+          {% macro drow(label, value) %}
+          <div>
+            <div style="font-size:10.5px;font-weight:600;color:var(--ink-muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px">{{ label }}</div>
+            <div style="font-size:13.5px;color:var(--ink)">{{ value or '—' }}</div>
+          </div>
+          {% endmacro %}
+          {{ drow('Requested By', log.requested_by.full_name if log.requested_by else None) }}
+          {{ drow('Assigned To', log.assigned_to.full_name if log.assigned_to else None) }}
+          {{ drow('Request Date', log.request_date.strftime('%d %B %Y') if log.request_date else None) }}
+          {{ drow('Scheduled Date', log.scheduled_date.strftime('%d %B %Y') if log.scheduled_date else None) }}
+          {{ drow('Completed Date', log.completed_date.strftime('%d %B %Y') if log.completed_date else None) }}
+          {{ drow('Next Service Due', log.next_due_date.strftime('%d %B %Y') if log.next_due_date else None) }}
+          <div style="grid-column:1/-1">
+            <div style="font-size:10.5px;font-weight:600;color:var(--ink-muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px">Issue Description</div>
+            <div style="font-size:13.5px;color:var(--ink);line-height:1.7;background:var(--bg);padding:12px;border-radius:var(--radius-sm)">
+              {{ log.issue_description or '—' }}
+            </div>
+          </div>
+          {% if log.technician_notes %}
+          <div style="grid-column:1/-1">
+            <div style="font-size:10.5px;font-weight:600;color:var(--ink-muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px">Technician Notes</div>
+            <div style="font-size:13.5px;color:var(--ink);line-height:1.7;background:var(--success-tint);padding:12px;border-radius:var(--radius-sm)">
+              {{ log.technician_notes }}
+            </div>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Cost Summary -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px">
+          <div style="background:var(--bg);border-radius:var(--radius-sm);padding:14px;text-align:center">
+            <div style="font-size:10px;font-weight:600;color:var(--ink-muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px">Estimated Cost</div>
+            <div style="font-family:var(--font-heading);font-size:22px;color:var(--navy)">₹{{ '{:,.0f}'.format(log.estimated_cost|float) }}</div>
+          </div>
+          <div style="background:var(--{{ 'success' if (log.actual_cost or 0)|float <= (log.estimated_cost or 1)|float else 'warning' }}-tint);border-radius:var(--radius-sm);padding:14px;text-align:center">
+            <div style="font-size:10px;font-weight:600;color:var(--ink-muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px">Actual Cost</div>
+            <div style="font-family:var(--font-heading);font-size:22px;color:var(--navy)">₹{{ '{:,.0f}'.format(log.actual_cost|float) }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Update Form (not for dept staff, unless cancelling own request) -->
+    {% if current_user.is_admin or current_user.is_maintenance %}
+    <div class="card">
+      <div class="card-header-custom">
+        <h3 class="card-title"><i class="bi bi-pencil me-2" style="color:var(--brass)"></i>Update Request</h3>
+      </div>
+      <div class="card-body-custom">
+        <form action="{{ url_for('maintenance.update_status', log_id=log.id) }}" method="POST">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div>
+              <label class="form-label-custom">Status</label>
+              <select name="status" class="form-control-custom">
+                <option value="pending" {{ 'selected' if log.status=='pending' }}>Pending</option>
+                <option value="in_progress" {{ 'selected' if log.status=='in_progress' }}>In Progress</option>
+                <option value="resolved" {{ 'selected' if log.status=='resolved' }}>Resolved</option>
+                <option value="cancelled" {{ 'selected' if log.status=='cancelled' }}>Cancelled</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label-custom">Assign To</label>
+              <select name="assigned_to_id" class="form-control-custom">
+                <option value="">Unassigned</option>
+                {% for u in maintenance_users %}
+                <option value="{{ u.id }}" {{ 'selected' if log.assigned_to_id == u.id }}>{{ u.full_name or u.username }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+              <label class="form-label-custom">Completed Date</label>
+              <input type="date" name="completed_date" class="form-control-custom"
+                value="{{ log.completed_date.strftime('%Y-%m-%d') if log.completed_date else '' }}" />
+            </div>
+            <div>
+              <label class="form-label-custom">Next Service Due</label>
+              <input type="date" name="next_due_date" class="form-control-custom"
+                value="{{ log.next_due_date.strftime('%Y-%m-%d') if log.next_due_date else '' }}" />
+            </div>
+            <div>
+              <label class="form-label-custom">Actual Cost (₹)</label>
+              <input type="number" name="actual_cost" class="form-control-custom" step="0.01" min="0"
+                value="{{ log.actual_cost or '' }}" placeholder="0.00" />
+            </div>
+            <div style="grid-column:1/-1">
+              <label class="form-label-custom">Technician Notes</label>
+              <textarea name="technician_notes" class="form-control-custom" rows="3"
+                placeholder="Resolution notes, parts replaced, etc.">{{ log.technician_notes or '' }}</textarea>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-sm mt-3">
+            <i class="bi bi-check-lg me-1"></i>Update Request
+          </button>
+        </form>
+      </div>
+    </div>
+    {% elif current_user.is_department and log.requested_by_id == current_user.id and log.status == 'pending' %}
+    <div class="card" style="border-color:var(--danger-tint)">
+      <div class="card-body-custom">
+        <form action="{{ url_for('maintenance.update_status', log_id=log.id) }}" method="POST">
+          <input type="hidden" name="status" value="cancelled" />
+          <button type="submit" class="btn btn-sm" style="background:var(--danger-tint);color:var(--danger);border:1px solid #e8c4bc"
+            data-confirm="Cancel this maintenance request?">
+            <i class="bi bi-x-circle me-1"></i>Cancel My Request
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <!-- Right Sidebar -->
+  <div style="display:flex;flex-direction:column;gap:20px">
+    <!-- Asset Quick Info -->
+    {% if log.asset %}
+    <div class="card">
+      <div class="card-header-custom">
+        <h3 class="card-title"><i class="bi bi-box-seam me-2" style="color:var(--brass)"></i>Asset</h3>
+        <a href="{{ url_for('assets.detail', asset_id=log.asset.id) }}" class="btn-icon">
+          <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+      <div class="card-body-custom">
+        <div style="font-weight:600;font-size:15px;color:var(--navy);margin-bottom:4px">{{ log.asset.name }}</div>
+        <div style="font-size:12px;color:var(--ink-muted);margin-bottom:12px">{{ log.asset.asset_tag }} · {{ log.asset.category }}</div>
+        <span class="badge-pill {{ log.asset.status_badge_class }}">{{ log.asset.status_label }}</span>
+        {% if log.asset.department %}
+        <div style="font-size:12px;color:var(--ink-muted);margin-top:8px">
+          <i class="bi bi-building me-1"></i>{{ log.asset.department.name }}
+        </div>
+        {% endif %}
+        {% if log.asset.location %}
+        <div style="font-size:12px;color:var(--ink-muted);margin-top:4px">
+          <i class="bi bi-geo-alt me-1"></i>{{ log.asset.location }}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Timestamps -->
+    <div class="card">
+      <div class="card-header-custom">
+        <h3 class="card-title"><i class="bi bi-clock me-2" style="color:var(--brass)"></i>Timeline</h3>
+      </div>
+      <div class="card-body-custom">
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-dot success"></div>
+            <div class="timeline-date">{{ log.created_at.strftime('%d %b %Y, %H:%M') if log.created_at else '—' }}</div>
+            <div class="timeline-title">Request Created</div>
+          </div>
+          {% if log.scheduled_date %}
+          <div class="timeline-item">
+            <div class="timeline-dot {{ 'warning' if log.is_overdue else 'info' }}"></div>
+            <div class="timeline-date">{{ log.scheduled_date.strftime('%d %b %Y') }}</div>
+            <div class="timeline-title">Scheduled Date</div>
+          </div>
+          {% endif %}
+          {% if log.completed_date %}
+          <div class="timeline-item">
+            <div class="timeline-dot success"></div>
+            <div class="timeline-date">{{ log.completed_date.strftime('%d %b %Y') }}</div>
+            <div class="timeline-title">Completed</div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin delete -->
+    {% if current_user.is_admin %}
+    <div class="card" style="border-color:var(--danger-tint)">
+      <div class="card-body-custom">
+        <form action="{{ url_for('maintenance.delete', log_id=log.id) }}" method="POST">
+          <button type="submit" class="btn btn-sm w-100" style="background:var(--danger-tint);color:var(--danger);border:1px solid #e8c4bc"
+            data-confirm="Delete this maintenance record?">
+            <i class="bi bi-trash3 me-1"></i>Delete Record
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

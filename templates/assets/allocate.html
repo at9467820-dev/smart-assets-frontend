@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Reallocate Asset{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Reallocate Asset</h1>
+    <p class="page-subtitle">{{ asset.asset_tag }} — {{ asset.name }}</p>
+  </div>
+  <a href="{{ url_for('assets.detail', asset_id=asset.id) }}" class="btn btn-outline-primary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Back
+  </a>
+</div>
+
+<div style="max-width:540px">
+  <div class="card">
+    <div class="card-body-custom">
+      <div style="background:var(--bg);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:20px">
+        <div style="font-size:11px;color:var(--ink-muted);margin-bottom:4px">Current Location</div>
+        <div style="font-weight:500;color:var(--navy)">{{ asset.department.name if asset.department else '—' }} · {{ asset.location or 'No location' }}</div>
+        <div style="font-size:12px;color:var(--ink-muted)">Assigned to: {{ asset.assigned_to.full_name if asset.assigned_to else 'Unassigned' }}</div>
+      </div>
+
+      <form method="POST">
+        <div style="display:grid;gap:16px">
+          <div>
+            <label class="form-label-custom">Transfer to Department *</label>
+            <select name="to_department_id" class="form-control-custom" required>
+              <option value="">Select department</option>
+              {% for d in departments %}
+              <option value="{{ d.id }}" {{ 'selected' if d.id == asset.department_id }}>{{ d.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="form-label-custom">Assign to User</label>
+            <select name="to_user_id" class="form-control-custom">
+              <option value="">Unassigned</option>
+              {% for u in users %}
+              <option value="{{ u.id }}">{{ u.full_name or u.username }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="form-label-custom">Reason for Transfer</label>
+            <textarea name="reason" class="form-control-custom" rows="2" placeholder="e.g. New semester allocation, department request…"></textarea>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary mt-4">
+          <i class="bi bi-arrow-left-right me-2"></i>Confirm Reallocation
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

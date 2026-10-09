@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Budget Report{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Budget Report — FY{{ current_year }}</h1>
+    <p class="page-subtitle">{{ estimates|length }} estimates on record</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('reports.budget', format='pdf') }}" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-file-earmark-pdf me-1"></i>Export PDF
+    </a>
+    <a href="{{ url_for('reports.budget', format='excel') }}" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-file-earmark-excel me-1"></i>Export Excel
+    </a>
+  </div>
+</div>
+
+<div class="card">
+  {% if estimates %}
+  <div style="overflow-x:auto">
+    <table class="table-custom">
+      <thead>
+        <tr>
+          <th>Department</th><th>Category</th><th>Est. Maintenance (₹)</th>
+          <th>Est. Replacement (₹)</th><th>Total Est. (₹)</th>
+          <th>Actual Spent (₹)</th><th>Variance (₹)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in estimates %}
+        <tr>
+          <td style="font-weight:500">{{ e.department.name if e.department else '—' }}</td>
+          <td>{{ e.category or 'All' }}</td>
+          <td>₹{{ '{:,.0f}'.format(e.estimated_maintenance_cost|float) }}</td>
+          <td>₹{{ '{:,.0f}'.format(e.estimated_replacement_cost|float) }}</td>
+          <td style="font-weight:600">₹{{ '{:,.0f}'.format(e.total_estimated) }}</td>
+          <td>₹{{ '{:,.0f}'.format(e.actual_spent|float) }}</td>
+          <td style="color:{{ 'var(--danger)' if e.variance > 0 else 'var(--success)' }};font-weight:500">
+            {{ '+' if e.variance > 0 else '' }}₹{{ '{:,.0f}'.format(e.variance) }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon"><i class="bi bi-wallet2"></i></div>
+    <div class="empty-title">No budget estimates saved</div>
+    <div class="empty-sub"><a href="{{ url_for('budget.index') }}">Go to Budget page to generate estimates →</a></div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

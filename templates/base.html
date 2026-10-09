@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}AssetPulse{% endblock %} — Smart Asset Management</title>
+  <meta name="description" content="AssetPulse SAMS — Smart Asset Management System for educational institutions." />
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/favicon.svg') }}" />
+
+  <!-- Bootstrap 5 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!-- Design System -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dark.css') }}" />
+
+  {% block extra_css %}{% endblock %}
+
+  <script>
+    // Apply saved theme before paint to avoid flash
+    (function(){
+      var t = localStorage.getItem('ap-theme') || 'light';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+</head>
+<body>
+
+<!-- ── Sidebar Overlay (mobile) ──────────────────────────── -->
+<div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+<!-- ════════════════════════════════════════════════════════
+     SIDEBAR
+════════════════════════════════════════════════════════ -->
+<nav id="sidebar" aria-label="Main navigation">
+
+  <!-- Brand with SVG Logo -->
+  <div class="sidebar-brand">
+    <div class="sidebar-logo-icon">
+      <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="2" width="48" height="48" rx="12" fill="#091A17" stroke="#10B981" stroke-width="1.5"/>
+        <g transform="translate(12, 11)">
+          <path d="M4 24V8L10 4V20L4 24Z" fill="#10B981" />
+          <path d="M10 4L22 20V26L10 10V4Z" fill="#D4AF37" />
+          <path d="M22 8V24L16 28V12L22 8Z" fill="#059669" opacity="0.9" />
+          <circle cx="22" cy="8" r="2.5" fill="#FDE047" />
+        </g>
+      </svg>
+    </div>
+    <div class="sidebar-brand-text">
+      <span class="sidebar-brand-name">AssetPulse</span>
+      <span class="sidebar-brand-sub">Smart Asset Registry</span>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <div class="sidebar-nav">
+    <div class="sidebar-section-label">Menu</div>
+
+    <a href="{{ url_for('dashboard.index') }}" class="nav-item-link">
+      <i class="bi bi-grid-1x2-fill"></i>
+      <span>Overview</span>
+    </a>
+
+    <a href="{{ url_for('assets.list_assets') }}" class="nav-item-link">
+      <i class="bi bi-box-seam-fill"></i>
+      <span>Assets</span>
+    </a>
+
+    <a href="{{ url_for('issues.list_issues') }}" class="nav-item-link">
+      <i class="bi bi-file-earmark-person-fill"></i>
+      <span>Material Issues</span>
+      {% if overdue_issues_count is defined and overdue_issues_count > 0 %}
+      <span class="badge-count" style="background:var(--danger)">{{ overdue_issues_count }}</span>
+      {% endif %}
+    </a>
+
+    <a href="{{ url_for('maintenance.list_logs') }}" class="nav-item-link">
+      <i class="bi bi-tools"></i>
+      <span>Maintenance</span>
+      {% if global_alerts > 0 %}
+      <span class="badge-count">{{ global_alerts }}</span>
+      {% endif %}
+    </a>
+
+    <a href="{{ url_for('allocations.index') }}" class="nav-item-link">
+      <i class="bi bi-arrow-left-right"></i>
+      <span>Allocations</span>
+    </a>
+
+    <div class="sidebar-section-label">Finance & Procurement</div>
+
+    <a href="{{ url_for('orders.list_orders') }}" class="nav-item-link">
+      <i class="bi bi-cart-check-fill"></i>
+      <span>Asset Orders</span>
+    </a>
+
+    <a href="{{ url_for('budget.index') }}" class="nav-item-link">
+      <i class="bi bi-wallet2"></i>
+      <span>Budget & Reports</span>
+    </a>
+
+    <a href="{{ url_for('reports.index') }}" class="nav-item-link">
+      <i class="bi bi-file-earmark-bar-graph-fill"></i>
+      <span>Export Reports</span>
+    </a>
+
+    <div class="sidebar-section-label">Intelligence</div>
+
+    <a href="{{ url_for('analysis.index') }}" class="nav-item-link">
+      <i class="bi bi-graph-up-arrow"></i>
+      <span>Analysis</span>
+    </a>
+
+    <a href="{{ url_for('assets.scanner') }}" class="nav-item-link">
+      <i class="bi bi-qr-code-scan"></i>
+      <span>QR Scanner</span>
+    </a>
+
+    {% if current_user.is_admin %}
+    <div class="sidebar-section-label">Administration</div>
+
+    <a href="{{ url_for('auth.users') }}" class="nav-item-link">
+      <i class="bi bi-people-fill"></i>
+      <span>Manage Users</span>
+    </a>
+
+    <a href="{{ url_for('assets.import_csv') }}" class="nav-item-link">
+      <i class="bi bi-upload"></i>
+      <span>Bulk Import</span>
+    </a>
+
+    <a href="{{ url_for('reports.qr_labels') }}" class="nav-item-link">
+      <i class="bi bi-printer-fill"></i>
+      <span>QR Labels</span>
+    </a>
+
+    <a href="{{ url_for('auth.audit_logs') }}" class="nav-item-link">
+      <i class="bi bi-shield-check"></i>
+      <span>Audit Trail</span>
+    </a>
+    {% endif %}
+  </div>
+
+  <!-- User Footer -->
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="sidebar-avatar">
+        {% if current_user.role == 'admin' %}
+          <img src="{{ url_for('static', filename='img/avatar-admin.jpg') }}" alt="Admin" />
+        {% elif current_user.role == 'maintenance' %}
+          <img src="{{ url_for('static', filename='img/avatar-maintenance.jpg') }}" alt="Maintenance" />
+        {% else %}
+          <img src="{{ url_for('static', filename='img/avatar-staff.jpg') }}" alt="Staff" />
+        {% endif %}
+      </div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name">{{ current_user.full_name or current_user.username }}</div>
+        <div class="sidebar-user-role">{{ current_user.role }}</div>
+      </div>
+      <a href="{{ url_for('auth.logout') }}" class="btn-icon ms-auto" data-bs-toggle="tooltip" title="Logout">
+        <i class="bi bi-box-arrow-right"></i>
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- ════════════════════════════════════════════════════════
+     MAIN CONTENT
+════════════════════════════════════════════════════════ -->
+<div id="main-content">
+
+  <!-- Top Bar -->
+  <header class="topbar">
+    <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar">
+      <i class="bi bi-list"></i>
+    </button>
+
+    <div class="topbar-greeting">
+      <p class="topbar-greeting-text">
+        {% block greeting %}
+          {% set hour = now().hour if now is defined else 12 %}
+          {% if hour < 12 %}☀️{% elif hour < 17 %}🌤️{% else %}🌙{% endif %}
+          {{ "Good morning" if hour < 12 else ("Good afternoon" if hour < 17 else "Good evening") }}, {{ current_user.full_name.split()[0] if current_user.full_name else current_user.username }}
+        {% endblock %}
+      </p>
+      <p class="topbar-date">
+        {% block topbar_sub %}
+          {{ now().strftime('%A, %d %B %Y') if now is defined else '' }}
+        {% endblock %}
+      </p>
+    </div>
+
+    <div class="topbar-actions">
+      <!-- Global Search -->
+      <div class="search-wrapper">
+        <i class="bi bi-search search-icon"></i>
+        <input
+          type="text"
+          id="global-search"
+          class="search-input"
+          placeholder="Search assets, tags…"
+          autocomplete="off"
+          aria-label="Global search"
+        />
+        <div id="search-results" class="search-results"></div>
+      </div>
+
+      <!-- Scan Button -->
+      <a href="{{ url_for('assets.scanner') }}" class="btn-scan">
+        <i class="bi bi-qr-code-scan"></i>
+        Scan
+      </a>
+
+      <!-- Notification Bell -->
+      <button id="notif-bell" class="notif-btn" data-bs-toggle="dropdown" aria-label="Notifications">
+        <i class="bi bi-bell-fill"></i>
+        <span id="notif-badge" class="notif-badge" style="display:none">0</span>
+      </button>
+
+      <!-- Dark Mode Toggle -->
+      <button id="dark-toggle" class="dark-toggle" aria-label="Toggle dark mode">
+        <i class="bi bi-moon-stars-fill"></i>
+      </button>
+
+      <!-- Profile -->
+      <a href="{{ url_for('auth.profile') }}" class="topbar-avatar-photo" data-bs-toggle="tooltip" title="View Profile">
+        {% if current_user.role == 'admin' %}
+          <img src="{{ url_for('static', filename='img/avatar-admin.jpg') }}" alt="Profile" />
+        {% elif current_user.role == 'maintenance' %}
+          <img src="{{ url_for('static', filename='img/avatar-maintenance.jpg') }}" alt="Profile" />
+        {% else %}
+          <img src="{{ url_for('static', filename='img/avatar-staff.jpg') }}" alt="Profile" />
+        {% endif %}
+      </a>
+    </div>
+  </header>
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=True) %}
+    {% if messages %}
+      <div style="padding: 12px 28px 0;">
+        {% for category, message in messages %}
+          <div class="flash-message {{ category }}" data-dismiss="true">
+            <i class="bi {{ 'bi-check-circle-fill' if category == 'success' else ('bi-exclamation-triangle-fill' if category in ('danger','warning') else 'bi-info-circle-fill') }}"></i>
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- Page Content -->
+  <main class="content-area">
+    {% block content %}{% endblock %}
+  </main>
+
+</div><!-- /#main-content -->
+
+<!-- ── Spotlight Command Palette Modal (Ctrl + K) ─────────── -->
+<div id="cmd-palette" class="cmd-palette-backdrop">
+  <div class="cmd-palette-card">
+    <div class="cmd-palette-header">
+      <i class="bi bi-search" style="color:var(--brass);font-size:18px"></i>
+      <input type="text" id="cmd-input" class="cmd-palette-input" placeholder="Type a command, search asset tag or page..." autocomplete="off" />
+      <span class="cmd-palette-shortcut">ESC</span>
+    </div>
+    <div class="cmd-palette-body" id="cmd-list">
+      <div class="cmd-palette-group-title">Quick Actions</div>
+      <a href="{{ url_for('issues.create') }}" class="cmd-palette-item">
+        <div class="cmd-palette-item-left">
+          <div class="cmd-palette-item-icon"><i class="bi bi-file-earmark-plus-fill"></i></div>
+          <div>Issue Material / Generate Gate Pass (Parchi)</div>
+        </div>
+        <span class="cmd-palette-shortcut">Issue</span>
+      </a>
+      <a href="{{ url_for('assets.create') }}" class="cmd-palette-item">
+        <div class="cmd-palette-item-left">
+          <div class="cmd-palette-item-icon"><i class="bi bi-plus-lg"></i></div>
+          <div>Register New Asset</div>
+        </div>
+        <span class="cmd-palette-shortcut">Asset</span>
+      </a>
+      <a href="{{ url_for('orders.create') }}" class="cmd-palette-item">
+        <div class="cmd-palette-item-left">
+          <div class="cmd-palette-item-icon"><i class="bi bi-cart-plus-fill"></i></div>
+          <div>New Asset Requisition / Order</div>
+        </div>
+        <span class="cmd-palette-shortcut">Order</span>
+      </a>
+      <a href="{{ url_for('maintenance.create') }}" class="cmd-palette-item">
+        <div class="cmd-palette-item-left">
+          <div class="cmd-palette-item-icon"><i class="bi bi-tools"></i></div>
+          <div>Create Maintenance Request</div>
+        </div>
+        <span class="cmd-palette-shortcut">Maint</span>
+      </a>
+      <a href="{{ url_for('assets.scanner') }}" class="cmd-palette-item">
+        <div class="cmd-palette-item-left">
+          <div class="cmd-palette-item-icon"><i class="bi bi-qr-code-scan"></i></div>
+          <div>Open Camera QR Scanner</div>
+        </div>
+        <span class="cmd-palette-shortcut">Scan</span>
+      </a>
+      
+      <div class="cmd-palette-group-title">Navigation</div>
+      <a href="{{ url_for('dashboard.index') }}" class="cmd-palette-item">
+        <div class="cmd-palette-item-left">
+          <div class="cmd-palette-item-icon"><i class="bi bi-grid-1x2"></i></div>
+          <div>Dashboard Overview</div>
+        </div>
+        <span class="cmd-palette-shortcut">Jump</span>
+      </a>
+      <a href="{{ url_for('issues.list_issues') }}" class="cmd-palette-item">
+        <div class="cmd-palette-item-left">
+          <div class="cmd-palette-item-icon"><i class="bi bi-file-earmark-person-fill"></i></div>
+          <div>Material Issues & Gate Passes</div>
+        </div>
+        <span class="cmd-palette-shortcut">Jump</span>
+      </a>
+      <a href="{{ url_for('budget.index') }}" class="cmd-palette-item">
+        <div class="cmd-palette-item-left">
+          <div class="cmd-palette-item-icon"><i class="bi bi-wallet2"></i></div>
+          <div>Budget & Spend Variance</div>
+        </div>
+        <span class="cmd-palette-shortcut">Jump</span>
+      </a>
+      <a href="{{ url_for('analysis.index') }}" class="cmd-palette-item">
+        <div class="cmd-palette-item-left">
+          <div class="cmd-palette-item-icon"><i class="bi bi-graph-up-arrow"></i></div>
+          <div>Asset Risk & Utilization Analysis</div>
+        </div>
+        <span class="cmd-palette-shortcut">Jump</span>
+      </a>
+      {% if current_user.is_admin %}
+      <a href="{{ url_for('auth.audit_logs') }}" class="cmd-palette-item">
+        <div class="cmd-palette-item-left">
+          <div class="cmd-palette-item-icon"><i class="bi bi-shield-check"></i></div>
+          <div>System Audit Trail</div>
+        </div>
+        <span class="cmd-palette-shortcut">Admin</span>
+      </a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- ── Scripts ─────────────────────────────────────────── -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+
+{% block extra_js %}{% endblock %}
+
+</body>
+</html>

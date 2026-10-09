@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Bulk Import Assets{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Bulk Import Assets</h1>
+    <p class="page-subtitle">Upload a CSV file to register multiple assets at once</p>
+  </div>
+  <a href="{{ url_for('assets.list_assets') }}" class="btn btn-outline-primary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Back to Assets
+  </a>
+</div>
+
+<div style="max-width:600px">
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-header-custom">
+      <h3 class="card-title"><i class="bi bi-upload me-2" style="color:var(--brass)"></i>Upload CSV</h3>
+    </div>
+    <div class="card-body-custom">
+      <form method="POST" enctype="multipart/form-data">
+        <div style="border:2px dashed var(--hairline);border-radius:var(--radius-sm);padding:32px;text-align:center;margin-bottom:16px;cursor:pointer"
+          onclick="document.getElementById('csv-input').click()">
+          <i class="bi bi-filetype-csv" style="font-size:36px;color:var(--ink-muted);opacity:0.4;display:block;margin-bottom:8px"></i>
+          <div style="font-size:14px;font-weight:500;color:var(--navy)">Click to select a CSV file</div>
+          <div id="csv-filename" style="font-size:12px;color:var(--ink-muted);margin-top:4px">No file selected</div>
+        </div>
+        <input type="file" id="csv-input" name="csv_file" accept=".csv" style="display:none"
+          onchange="document.getElementById('csv-filename').textContent = this.files[0]?.name || 'No file selected'" />
+        <button type="submit" class="btn btn-primary w-100">
+          <i class="bi bi-upload me-2"></i>Import Assets
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header-custom">
+      <h3 class="card-title"><i class="bi bi-info-circle me-2" style="color:var(--brass)"></i>CSV Format</h3>
+    </div>
+    <div class="card-body-custom">
+      <p style="font-size:13px;color:var(--ink-muted);margin-bottom:12px">
+        Your CSV must include a header row with these columns:
+      </p>
+      <div style="overflow-x:auto">
+        <table class="table-custom" style="font-size:12px">
+          <thead>
+            <tr>
+              <th>Column</th><th>Required</th><th>Example</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for col, req, ex in [
+              ('asset_tag','No','CSE-042'),
+              ('name','Yes','Dell Laptop Pro'),
+              ('department_code','Yes','CSE'),
+              ('category','No','Computer'),
+              ('location','No','Lab 3, Block B'),
+              ('purchase_date','No','2023-06-15'),
+              ('purchase_cost','No','45000'),
+              ('warranty_expiry','No','2026-06-14'),
+              ('status','No','active'),
+              ('serial_number','No','SN123456'),
+              ('manufacturer','No','Dell'),
+              ('notes','No','Any extra notes'),
+            ] %}
+            <tr>
+              <td style="font-weight:600;color:var(--navy)">{{ col }}</td>
+              <td><span class="badge-pill {{ 'badge-danger' if req=='Yes' else 'badge-secondary' }}">{{ req }}</span></td>
+              <td style="color:var(--ink-muted)">{{ ex }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:14px;padding:12px;background:var(--bg);border-radius:var(--radius-sm)">
+        <div style="font-size:11.5px;color:var(--ink-muted)">
+          <strong>Department codes:</strong> CSE, ECE, MECH, CIVIL, LIB, ADMIN<br>
+          <strong>Status values:</strong> active, under_repair, damaged, retired<br>
+          <strong>Category values:</strong> Computer, Projector, Furniture, Lab Equipment, Networking, Electrical, HVAC, Vehicle, Other
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

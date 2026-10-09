@@ -1,0 +1,595 @@
+{% extends "base.html" %}
+{% block title %}{{ asset.name }}{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<nav style="margin-bottom:16px;font-size:12px;color:var(--ink-muted)">
+  <a href="{{ url_for('assets.list_assets') }}" style="color:var(--ink-muted)">Assets</a>
+  <span class="mx-2">›</span>
+  <span style="color:var(--navy)">{{ asset.asset_tag }}</span>
+</nav>
+
+<!-- Page Header -->
+<div class="page-header" style="align-items:flex-start">
+  <div style="display:flex;align-items:flex-start;gap:16px;flex:1">
+    {% if asset.photo_path %}
+    <img src="{{ url_for('static', filename=asset.photo_path) }}" alt="{{ asset.name }}"
+      style="width:80px;height:80px;object-fit:cover;border-radius:var(--radius-md);border:1px solid var(--hairline);flex-shrink:0" />
+    {% else %}
+    <div style="width:80px;height:80px;background:var(--bg);border-radius:var(--radius-md);border:1px solid var(--hairline);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+      <i class="bi bi-box-seam" style="font-size:32px;color:var(--ink-muted);opacity:0.4"></i>
+    </div>
+    {% endif %}
+    <div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+        <span class="badge-pill badge-navy" style="font-size:11px;font-family:var(--font-body);font-weight:700;letter-spacing:0.05em">
+          {{ asset.asset_tag }}
+        </span>
+        <span class="badge-pill {{ asset.status_badge_class }}">
+          <span class="status-dot {{ 'success' if asset.status=='active' else ('warning' if asset.status=='under_repair' else ('danger' if asset.status=='damaged' else 'secondary')) }}"></span>
+          {{ asset.status_label }}
+        </span>
+        {% if risk_score >= 70 %}
+        <span class="badge-pill badge-danger"><i class="bi bi-shield-exclamation me-1"></i>High Risk</span>
+        {% elif risk_score >= 40 %}
+        <span class="badge-pill badge-warning"><i class="bi bi-exclamation-triangle me-1"></i>Moderate Risk</span>
+        {% endif %}
+      </div>
+      <h1 class="page-title" style="margin-bottom:4px">{{ asset.name }}</h1>
+      <p class="page-subtitle">
+        {{ asset.category }} ·
+        {{ asset.department.name if asset.department else '—' }} ·
+        <i class="bi bi-geo-alt-fill"></i> {{ asset.location or 'No location set' }}
+      </p>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2 flex-wrap">
+    <!-- Issue Material / Parchi -->
+    {% if not asset.is_currently_issued and asset.status != 'retired' %}
+    <a href="{{ url_for('issues.create', asset_id=asset.id) }}" class="btn btn-success btn-sm">
+      <i class="bi bi-file-earmark-plus-fill me-1"></i>Issue Material / Gate Pass
+    </a>
+    {% elif asset.is_currently_issued %}
+    <a href="{{ url_for('issues.detail', issue_id=asset.current_issue.id) }}" class="btn btn-warning btn-sm text-dark">
+      <i class="bi bi-receipt me-1"></i>View Active Parchi (#{{ asset.current_issue.slip_number }})
+    </a>
+    {% endif %}
+
+    <a href="{{ url_for('maintenance.create') }}?asset_id={{ asset.id }}" class="btn btn-primary btn-sm">
+      <i class="bi bi-tools me-1"></i>Send to Maintenance
+    </a>
+
+    <a href="{{ url_for('orders.create') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-cart-plus me-1"></i>Reorder Parts
+    </a>
+
+    <button type="button" class="btn btn-brass btn-sm" onclick="document.getElementById('badge-modal-backdrop').style.display='flex'">
+      <i class="bi bi-printer-fill me-1"></i>Print QR Tag
+    </button>
+
+    {% if not current_user.is_maintenance %}
+    <a href="{{ url_for('assets.edit', asset_id=asset.id) }}" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-pencil me-1"></i>Edit
+    </a>
+    {% endif %}
+
+    {% if current_user.is_admin %}
+    <a href="{{ url_for('assets.allocate', asset_id=asset.id) }}" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-arrow-left-right me-1"></i>Reallocate
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ── Active Issue Banner (If currently issued out) ──────── -->
+{% if asset.is_currently_issued %}
+{% set cur_iss = asset.current_issue %}
+<div class="card mb-4" style="background:rgba(16,185,129,0.06);border:1.5px solid var(--emerald)">
+  <div class="card-body-custom py-3 d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div class="d-flex align-items-center gap-3">
+      <div style="width:44px;height:44px;background:var(--emerald);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px">
+        <i class="bi bi-person-check-fill"></i>
+      </div>
+      <div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge bg-success" style="font-size:11px">MATERIAL CURRENTLY ISSUED OUT</span>
+          <span class="text-muted" style="font-size:12px;font-family:monospace">Gate Pass: <b>{{ cur_iss.slip_number }}</b></span>
+        </div>
+        <div class="fw-bold text-dark fs-6 mt-1">
+          Bearer: {{ cur_iss.issued_to_name }} ({{ cur_iss.issued_to_dept or 'N/A' }}) • Issued by {{ cur_iss.issuer_name or 'Staff' }} on {{ cur_iss.issue_date.strftime('%d %b %Y, %I:%M %p') }}
+        </div>
+        <div class="text-muted" style="font-size:12px">
+          Purpose: <i>{{ cur_iss.purpose }}</i> • Expected Return: <b class="{{ 'text-danger' if cur_iss.is_overdue else 'text-dark' }}">{{ cur_iss.expected_return_date.strftime('%d %b %Y, %I:%M %p') if cur_iss.expected_return_date else 'Permanent' }}</b>
+        </div>
+      </div>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('issues.print_parchi', issue_id=cur_iss.id) }}" target="_blank" class="btn btn-sm btn-dark">
+        <i class="bi bi-printer me-1"></i>Print Parchi
+      </a>
+      <a href="{{ url_for('issues.detail', issue_id=cur_iss.id) }}" class="btn btn-sm btn-primary">
+        <i class="bi bi-box-arrow-in-down-left me-1"></i>Return / View Voucher
+      </a>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Main Grid -->
+<div style="display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start">
+
+  <!-- Left Column -->
+  <div style="display:flex;flex-direction:column;gap:20px">
+
+    <!-- Asset Details Card -->
+    <div class="card">
+      <div class="card-header-custom">
+        <h3 class="card-title"><i class="bi bi-info-circle me-2" style="color:var(--brass)"></i>Asset Details</h3>
+      </div>
+      <div class="card-body-custom">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          {% macro detail_row(label, value) %}
+          <div>
+            <div style="font-size:10.5px;font-weight:600;color:var(--ink-muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px">{{ label }}</div>
+            <div style="font-size:13.5px;color:var(--ink);font-weight:{{ '500' if value else '400' }}">{{ value or '—' }}</div>
+          </div>
+          {% endmacro %}
+
+          {{ detail_row('Category', asset.category) }}
+          {{ detail_row('Department', asset.department.name if asset.department else None) }}
+          {{ detail_row('Location', asset.location) }}
+          {{ detail_row('Assigned To', asset.assigned_to.full_name if asset.assigned_to else None) }}
+          {{ detail_row('Purchase Date', asset.purchase_date.strftime('%d %B %Y') if asset.purchase_date else None) }}
+          {{ detail_row('Purchase Cost', '₹{:,.0f}'.format(asset.purchase_cost|float) if asset.purchase_cost else None) }}
+          {{ detail_row('Age', (asset.age_years|string + ' years') if asset.age_years else None) }}
+          {{ detail_row('Warranty Expiry', asset.warranty_expiry.strftime('%d %B %Y') if asset.warranty_expiry else None) }}
+          {{ detail_row('Serial Number', asset.serial_number) }}
+          {{ detail_row('Model Number', asset.model_number) }}
+          {{ detail_row('Manufacturer', asset.manufacturer) }}
+
+          <div>
+            <div style="font-size:10.5px;font-weight:600;color:var(--ink-muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px">Condition</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="condition-bar">
+                {% for i in range(10) %}
+                <span class="condition-pip" style="background:{{ '#3F7D58' if asset.condition_rating >= 7 else ('#C47D2A' if asset.condition_rating >= 4 else '#A94A34') if i < (asset.condition_rating or 5) else 'var(--hairline)' }}"></span>
+                {% endfor %}
+              </div>
+              <small style="font-size:12px;font-weight:600;color:var(--navy)">{{ asset.condition_rating or '—' }}/10</small>
+            </div>
+          </div>
+        </div>
+
+        {% if asset.notes %}
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--hairline)">
+          <div style="font-size:10.5px;font-weight:600;color:var(--ink-muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px">Notes</div>
+          <div style="font-size:13px;color:var(--ink);line-height:1.6">{{ asset.notes }}</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Cost & Interactive Depreciation Analysis Card -->
+    <div class="card">
+      <div class="card-header-custom">
+        <h3 class="card-title"><i class="bi bi-calculator me-2" style="color:var(--brass)"></i>Interactive Depreciation Projection</h3>
+      </div>
+      <div class="card-body-custom">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;text-align:center;margin-bottom:20px">
+          <div style="background:var(--bg);border-radius:var(--radius-sm);padding:14px">
+            <div style="font-size:10px;font-weight:600;color:var(--ink-muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px">Purchase Cost</div>
+            <div style="font-family:var(--font-heading);font-size:22px;color:var(--navy)">₹{{ '{:,.0f}'.format(asset.purchase_cost|float) if asset.purchase_cost else 0 }}</div>
+          </div>
+          <div style="background:var(--bg);border-radius:var(--radius-sm);padding:14px">
+            <div style="font-size:10px;font-weight:600;color:var(--ink-muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px">Current Book Value</div>
+            <div style="font-family:var(--font-heading);font-size:22px;color:var(--navy)">₹{{ '{:,.0f}'.format(book_val) }}</div>
+          </div>
+          <div style="background:var(--danger-tint);border-radius:var(--radius-sm);padding:14px">
+            <div style="font-size:10px;font-weight:600;color:var(--danger);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px">Est. Replacement</div>
+            <div style="font-family:var(--font-heading);font-size:22px;color:var(--danger)">
+              {{ '₹{:,.0f}'.format(repl_cost) if repl_cost > 0 else 'N/A' }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Slider -->
+        <div style="background:var(--bg);border-radius:var(--radius-md);padding:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <label style="font-size:12px;font-weight:600;color:var(--navy)">Depreciation Projection (Years from Purchase):</label>
+            <span id="slider-years-val" style="font-family:var(--font-heading);font-size:16px;color:var(--brass);font-weight:600">3 Years</span>
+          </div>
+          <input type="range" id="dep-slider" min="1" max="10" value="{{ [asset.age_years|int, 1]|max }}" style="width:100%;accent-color:var(--navy);cursor:pointer" />
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--ink-muted);margin-top:4px">
+            <span>Year 1</span><span>Year 5</span><span>Year 10</span>
+          </div>
+          
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid var(--hairline)">
+            <div>
+              <small class="text-muted d-block mb-1" style="font-size:11px">Projected Residual Value</small>
+              <span id="proj-val" style="font-family:var(--font-heading);font-size:18px;color:var(--navy);font-weight:600">₹0</span>
+            </div>
+            <div>
+              <small class="text-muted d-block mb-1" style="font-size:11px">Accumulated Depreciation</small>
+              <span id="proj-dep" style="font-family:var(--font-heading);font-size:18px;color:var(--danger);font-weight:600">₹0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Maintenance History -->
+    <div class="card">
+      <div class="card-header-custom">
+        <h3 class="card-title"><i class="bi bi-clock-history me-2" style="color:var(--brass)"></i>Maintenance History</h3>
+        <a href="{{ url_for('maintenance.create') }}?asset_id={{ asset.id }}" class="btn btn-sm btn-primary" style="font-size:12px">
+          <i class="bi bi-plus me-1"></i>New Request
+        </a>
+      </div>
+      <div style="overflow-x:auto">
+        {% if maintenance_history %}
+        <table class="table-custom">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Issue</th>
+              <th>Status</th>
+              <th>Priority</th>
+              <th>Requested</th>
+              <th>Completed</th>
+              <th>Cost (₹)</th>
+              <th>Next Due</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for log in maintenance_history %}
+            <tr>
+              <td>
+                <a href="{{ url_for('maintenance.detail', log_id=log.id) }}" style="font-size:12px;font-weight:600;color:var(--navy)">
+                  #{{ log.id }}
+                </a>
+              </td>
+              <td style="max-width:200px;font-size:12.5px">{{ (log.issue_description or '')[:60] }}{{ '…' if (log.issue_description or '')|length > 60 }}</td>
+              <td>
+                <span class="badge-pill {{ 'badge-success' if log.status=='resolved' else ('badge-warning' if log.status=='in_progress' else ('badge-danger' if log.status=='cancelled' else 'badge-secondary')) }}">
+                  {{ log.status.replace('_',' ').title() }}
+                </span>
+              </td>
+              <td>
+                <span class="badge-pill {{ 'badge-danger' if log.priority=='critical' else ('badge-warning' if log.priority=='high' else ('badge-info' if log.priority=='medium' else 'badge-secondary')) }}">
+                  {{ (log.priority or 'medium').title() }}
+                </span>
+              </td>
+              <td style="font-size:12px">{{ log.request_date.strftime('%d %b %Y') if log.request_date else '—' }}</td>
+              <td style="font-size:12px">{{ log.completed_date.strftime('%d %b %Y') if log.completed_date else '—' }}</td>
+              <td style="font-size:12px">{{ '₹{:,.0f}'.format(log.actual_cost|float) if log.actual_cost else '—' }}</td>
+              <td style="font-size:12px">
+                {% if log.next_due_date %}
+                  {% if log.next_due_date < today %}
+                    <span class="badge-pill badge-danger">{{ log.next_due_date.strftime('%d %b %Y') }}</span>
+                  {% else %}
+                    {{ log.next_due_date.strftime('%d %b %Y') }}
+                  {% endif %}
+                {% else %}—{% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state" style="padding:32px">
+          <div class="empty-icon" style="font-size:28px"><i class="bi bi-tools"></i></div>
+          <div class="empty-title" style="font-size:15px">No maintenance records</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Material Issues & Gate Pass (Parchi) History -->
+    <div class="card">
+      <div class="card-header-custom">
+        <h3 class="card-title">
+          <i class="bi bi-file-earmark-person-fill me-2" style="color:var(--emerald)"></i>Material Issues & Gate Pass History
+        </h3>
+        {% if not asset.is_currently_issued and asset.status != 'retired' %}
+        <a href="{{ url_for('issues.create', asset_id=asset.id) }}" class="btn btn-sm btn-success" style="font-size:12px">
+          <i class="bi bi-plus me-1"></i>Issue Material
+        </a>
+        {% endif %}
+      </div>
+      <div style="overflow-x:auto">
+        {% if issue_history %}
+        <table class="table-custom">
+          <thead>
+            <tr>
+              <th>Slip #</th>
+              <th>Issued To</th>
+              <th>Issuer</th>
+              <th>Issue Date & Time</th>
+              <th>Expected Return</th>
+              <th>Status</th>
+              <th class="text-end">Parchi</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for iss in issue_history %}
+            <tr>
+              <td>
+                <a href="{{ url_for('issues.detail', issue_id=iss.id) }}" style="font-size:12px;font-weight:600;color:var(--navy);font-family:monospace">
+                  {{ iss.slip_number }}
+                </a>
+              </td>
+              <td>
+                <div class="fw-semibold text-dark" style="font-size:12.5px">{{ iss.issued_to_name }}</div>
+                <div class="text-muted" style="font-size:11px">{{ iss.issued_to_dept or 'N/A' }}</div>
+              </td>
+              <td style="font-size:12px">{{ iss.issuer_name or 'Staff' }}</td>
+              <td style="font-size:12px">
+                {{ iss.issue_date.strftime('%d %b %Y') }}<br/>
+                <span class="text-muted" style="font-size:10.5px">{{ iss.issue_date.strftime('%I:%M %p') }}</span>
+              </td>
+              <td style="font-size:12px">
+                {% if iss.expected_return_date %}
+                  <span class="{{ 'text-danger fw-bold' if iss.is_overdue else '' }}">
+                    {{ iss.expected_return_date.strftime('%d %b %Y') }}
+                  </span>
+                {% else %}
+                  <span class="text-muted">Permanent</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="badge {{ iss.status_badge_class }}">
+                  {{ iss.status_label }}
+                </span>
+              </td>
+              <td class="text-end">
+                <a href="{{ url_for('issues.print_parchi', issue_id=iss.id) }}" target="_blank" class="btn btn-sm btn-outline-dark" title="Print Parchi">
+                  <i class="bi bi-printer"></i>
+                </a>
+                <a href="{{ url_for('issues.detail', issue_id=iss.id) }}" class="btn btn-sm btn-outline-primary" title="View Voucher">
+                  <i class="bi bi-eye"></i>
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state" style="padding:32px">
+          <div class="empty-icon" style="font-size:28px"><i class="bi bi-file-earmark-check"></i></div>
+          <div class="empty-title" style="font-size:15px">No material checkout records</div>
+          <div class="text-muted" style="font-size:12px;margin-top:4px">This asset has not been checked out via Gate Pass yet.</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Lifecycle Timeline -->
+    <div class="card">
+      <div class="card-header-custom">
+        <h3 class="card-title"><i class="bi bi-diagram-3 me-2" style="color:var(--brass)"></i>Asset Lifecycle</h3>
+      </div>
+      <div class="card-body-custom">
+        {% if timeline %}
+        <div class="timeline">
+          {% for event in timeline %}
+          <div class="timeline-item">
+            <div class="timeline-dot {{ event.color }}">
+              <i class="bi {{ event.icon }}" style="font-size:7px;color:white"></i>
+            </div>
+            <div class="timeline-date">{{ event.date.strftime('%d %b %Y') if event.date else '—' }}</div>
+            <div class="timeline-title">{{ event.title }}</div>
+            <div class="timeline-desc">{{ event.desc }}</div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding:24px">
+          <div class="empty-sub">No lifecycle events yet.</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Sidebar -->
+  <div style="display:flex;flex-direction:column;gap:20px">
+
+    <!-- QR Code Card -->
+    <div class="card">
+      <div class="card-header-custom">
+        <h3 class="card-title"><i class="bi bi-qr-code me-2" style="color:var(--brass)"></i>Asset QR Code</h3>
+      </div>
+      <div class="card-body-custom" style="text-align:center">
+        {% if asset.qr_code_path %}
+        <div class="qr-container" style="display:inline-flex">
+          <img src="{{ url_for('static', filename=asset.qr_code_path) }}" alt="QR Code for {{ asset.asset_tag }}" />
+          <div class="qr-label">{{ asset.asset_tag }}</div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;justify-content:center">
+          <a href="{{ url_for('static', filename=asset.qr_code_path) }}" download class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-download me-1"></i>Download
+          </a>
+          {% if current_user.is_admin %}
+          <form action="{{ url_for('assets.regenerate_qr', asset_id=asset.id) }}" method="POST" style="display:inline">
+            <button type="submit" class="btn btn-outline-primary btn-sm">
+              <i class="bi bi-arrow-clockwise me-1"></i>Regenerate
+            </button>
+          </form>
+          {% endif %}
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding:20px">
+          <div class="empty-icon"><i class="bi bi-qr-code"></i></div>
+          <div class="empty-sub">No QR code generated</div>
+          {% if current_user.is_admin %}
+          <form action="{{ url_for('assets.regenerate_qr', asset_id=asset.id) }}" method="POST" style="margin-top:10px">
+            <button type="submit" class="btn btn-primary btn-sm">Generate QR</button>
+          </form>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Risk Score Card -->
+    <div class="card">
+      <div class="card-header-custom">
+        <h3 class="card-title"><i class="bi bi-shield-check me-2" style="color:var(--brass)"></i>Risk Assessment</h3>
+      </div>
+      <div class="card-body-custom">
+        <div style="text-align:center;margin-bottom:16px">
+          <div style="font-family:var(--font-heading);font-size:48px;font-weight:500;color:{{ '#A94A34' if risk_score >= 70 else ('#C47D2A' if risk_score >= 40 else '#3F7D58') }}">
+            {{ risk_score }}
+          </div>
+          <div class="badge-pill {{ risk_badge }}" style="margin:4px auto">{{ risk_label }}</div>
+          <div style="font-size:11.5px;color:var(--ink-muted);margin-top:6px">out of 100</div>
+        </div>
+        <div class="risk-bar {{ 'risk-high' if risk_score >= 70 else ('risk-medium' if risk_score >= 40 else 'risk-low') }}" style="height:8px;margin-bottom:16px">
+          <div class="risk-bar-fill" style="width:{{ risk_score }}%"></div>
+        </div>
+        <div style="font-size:12px;color:var(--ink-muted)">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+            <span>Age ({{ asset.age_years }}y / {{ {'Computer':5,'Projector':7,'Furniture':15,'Lab Equipment':10}.get(asset.category,8) }}y life)</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+            <span>Total repairs: {{ asset.repair_count }}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between">
+            <span>Days since service: {{ asset.days_since_last_service }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Warranty Status -->
+    <div class="card">
+      <div class="card-header-custom">
+        <h3 class="card-title"><i class="bi bi-shield me-2" style="color:var(--brass)"></i>Warranty</h3>
+      </div>
+      <div class="card-body-custom">
+        {% if asset.warranty_expiry %}
+          {% set ws = asset.warranty_status %}
+          {% set days_left = (asset.warranty_expiry - today).days %}
+          <div style="text-align:center">
+            <span class="badge-pill {{ 'badge-success' if ws == 'valid' else ('badge-warning' if ws == 'expiring_soon' else 'badge-danger') }}" style="font-size:13px;padding:6px 16px;margin-bottom:10px">
+              {{ 'Valid' if ws == 'valid' else ('Expiring Soon' if ws == 'expiring_soon' else 'Expired') }}
+            </span>
+            <div style="font-family:var(--font-heading);font-size:20px;color:var(--navy);margin-top:8px">
+              {{ asset.warranty_expiry.strftime('%d %b %Y') }}
+            </div>
+            <div style="font-size:12px;color:var(--ink-muted)">
+              {% if days_left > 0 %}{{ days_left }} days remaining{% else %}Expired {{ (-days_left) }} days ago{% endif %}
+            </div>
+          </div>
+        {% else %}
+          <div class="empty-sub text-center">No warranty information</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Delete (Admin only) -->
+    {% if current_user.is_admin %}
+    <div class="card" style="border-color:var(--danger-tint)">
+      <div class="card-body-custom">
+        <h6 style="color:var(--danger);font-size:12px;font-weight:600;margin-bottom:8px">Danger Zone</h6>
+        <form action="{{ url_for('assets.delete', asset_id=asset.id) }}" method="POST">
+          <button type="submit" class="btn btn-sm w-100" style="background:var(--danger-tint);color:var(--danger);border:1px solid #e8c4bc"
+            data-confirm="Are you sure you want to permanently delete {{ asset.asset_tag }}? This cannot be undone.">
+            <i class="bi bi-trash3 me-1"></i>Delete Asset
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+<!-- Printable Property Pass Badge Modal -->
+<div id="badge-modal-backdrop" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px">
+  <div class="card" style="width:100%;max-width:480px;background:white">
+    <div class="card-header-custom">
+      <h3 class="card-title"><i class="bi bi-badge-ad me-2" style="color:var(--brass)"></i>Official Printable Property Pass</h3>
+      <button type="button" class="btn-close" onclick="document.getElementById('badge-modal-backdrop').style.display='none'"></button>
+    </div>
+    <div class="card-body-custom" style="background:#f4f6f9;padding:24px">
+      
+      <div id="printable-tag-area">
+        <div class="printable-tag-badge">
+          <div class="printable-tag-header">
+            <div>
+              <div class="printable-tag-title">AssetPulse SAMS</div>
+              <div class="printable-tag-sub">INSTITUTIONAL PROPERTY TAG</div>
+            </div>
+            <i class="bi bi-shield-check" style="font-size:20px;color:#12203D"></i>
+          </div>
+          <div class="printable-tag-body">
+            {% if asset.qr_code_path %}
+            <img class="printable-tag-qr" src="{{ url_for('static', filename=asset.qr_code_path) }}" alt="QR" />
+            {% else %}
+            <div class="printable-tag-qr" style="display:flex;align-items:center;justify-content:center;font-size:10px">NO QR</div>
+            {% endif %}
+            <div class="printable-tag-details">
+              <div class="printable-tag-code">{{ asset.asset_tag }}</div>
+              <div class="printable-tag-name">{{ asset.name }}</div>
+              <div class="printable-tag-meta">
+                <div><strong>Dept:</strong> {{ asset.department.name if asset.department else '—' }}</div>
+                <div><strong>Location:</strong> {{ asset.location or '—' }}</div>
+                <div><strong>Purchase:</strong> {{ asset.purchase_date.strftime('%d/%m/%Y') if asset.purchase_date else '—' }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="printable-tag-barcode"></div>
+        </div>
+      </div>
+
+      <div style="margin-top:20px;display:flex;gap:10px;justify-content:center">
+        <button type="button" class="btn btn-primary" onclick="window.print()">
+          <i class="bi bi-printer me-2"></i>Print Tag Badge (4" x 2")
+        </button>
+        <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('badge-modal-backdrop').style.display='none'">
+          Close
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const slider = document.getElementById('dep-slider');
+  const yearsVal = document.getElementById('slider-years-val');
+  const projVal = document.getElementById('proj-val');
+  const projDep = document.getElementById('proj-dep');
+  
+  const cost = {{ asset.purchase_cost|float or 0 }};
+  const category = "{{ asset.category }}";
+  const lifespanMap = { 'Computer': 5, 'Projector': 7, 'Furniture': 15, 'Lab Equipment': 10, 'HVAC': 10, 'Networking': 5, 'Vehicle': 8 };
+  const lifespan = lifespanMap[category] || 8;
+
+  function calcDepreciation() {
+    if (!slider) return;
+    const years = parseInt(slider.value);
+    if (yearsVal) yearsVal.textContent = years + (years === 1 ? ' Year' : ' Years');
+
+    // Straight-Line Residual
+    const annualDep = cost / lifespan;
+    const accumDep = Math.min(cost, annualDep * years);
+    const residual = Math.max(0, cost - accumDep);
+
+    if (projVal) projVal.textContent = '₹' + Math.round(residual).toLocaleString('en-IN');
+    if (projDep) projDep.textContent = '₹' + Math.round(accumDep).toLocaleString('en-IN');
+  }
+
+  if (slider) {
+    slider.addEventListener('input', calcDepreciation);
+    calcDepreciation();
+  }
+});
+</script>
+{% endblock %}
+
+{% endblock %}

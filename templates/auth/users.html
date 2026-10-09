@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Users{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">User Management</h1>
+    <p class="page-subtitle">{{ users|length }} users registered</p>
+  </div>
+  <a href="{{ url_for('auth.create_user') }}" class="btn btn-primary btn-sm">
+    <i class="bi bi-person-plus me-1"></i>Add User
+  </a>
+</div>
+
+<div class="card">
+  <div style="overflow-x:auto">
+    <table class="table-custom">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Role</th>
+          <th>Department</th>
+          <th>Status</th>
+          <th>Last Login</th>
+          <th>Created</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="sidebar-avatar" style="background:var(--navy-panel);color:var(--brass-soft);font-size:13px;width:32px;height:32px">
+                {{ u.full_name[0].upper() if u.full_name else u.username[0].upper() }}
+              </div>
+              <div>
+                <div style="font-weight:500;color:var(--navy)">{{ u.full_name or u.username }}</div>
+                <small class="text-muted">{{ u.email }}</small>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span class="badge-pill {{ 'badge-navy' if u.role=='admin' else ('badge-brass' if u.role=='maintenance' else 'badge-info') }}">
+              {{ u.role.title() }}
+            </span>
+          </td>
+          <td>{{ u.department.name if u.department else '—' }}</td>
+          <td>
+            <span class="badge-pill {{ 'badge-success' if u.is_active else 'badge-danger' }}">
+              {{ 'Active' if u.is_active else 'Inactive' }}
+            </span>
+          </td>
+          <td style="font-size:12px">{{ u.last_login.strftime('%d %b %Y') if u.last_login else 'Never' }}</td>
+          <td style="font-size:12px">{{ u.created_at.strftime('%d %b %Y') if u.created_at else '—' }}</td>
+          <td>
+            <div class="d-flex gap-1">
+              <a href="{{ url_for('auth.edit_user', user_id=u.id) }}" class="btn-icon" data-bs-toggle="tooltip" title="Edit">
+                <i class="bi bi-pencil"></i>
+              </a>
+              {% if u.id != current_user.id %}
+              <form action="{{ url_for('auth.delete_user', user_id=u.id) }}" method="POST" style="display:inline">
+                <button type="submit" class="btn-icon" style="color:var(--danger)" data-confirm="Delete user {{ u.username }}?"
+                  data-bs-toggle="tooltip" title="Delete">
+                  <i class="bi bi-trash3"></i>
+                </button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}QR Label Sheets{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">QR Label Sheet Generator</h1>
+    <p class="page-subtitle">Generate a printable A4 PDF sheet of QR codes for physically tagging assets</p>
+  </div>
+</div>
+
+<div style="max-width:540px">
+  <div class="card">
+    <div class="card-header-custom">
+      <h3 class="card-title"><i class="bi bi-printer-fill me-2" style="color:var(--brass)"></i>Select Departments</h3>
+    </div>
+    <div class="card-body-custom">
+      <form action="{{ url_for('reports.qr_labels') }}" method="POST">
+        <div style="margin-bottom:16px">
+          <label class="form-label-custom">Departments (leave blank for all)</label>
+          <select name="departments" multiple class="form-control-custom" style="height:160px">
+            {% for d in departments %}
+            <option value="{{ d.id }}">{{ d.name }} ({{ d.code }})</option>
+            {% endfor %}
+          </select>
+          <div style="font-size:11.5px;color:var(--ink-muted);margin-top:6px">
+            Hold Ctrl/Cmd to select multiple departments
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-qr-code me-2"></i>Generate PDF Label Sheet
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <div class="card-body-custom">
+      <h6 style="font-family:var(--font-heading);color:var(--navy);margin-bottom:10px">Label Sheet Format</h6>
+      <div style="font-size:13px;color:var(--ink-muted);line-height:1.7">
+        <p>Each A4 page contains a 3×5 grid of QR code labels. Each label includes:</p>
+        <ul style="padding-left:18px;margin:0">
+          <li>The asset's unique QR code (encodes the live asset URL)</li>
+          <li>The asset tag (e.g. CSE-042) printed below the QR</li>
+          <li>The asset name truncated to fit the label</li>
+        </ul>
+        <p style="margin-top:10px">Print on A4 label sheets or plain paper, then cut and stick to the physical asset.</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

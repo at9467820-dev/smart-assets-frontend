@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Reports & Exports</h1>
+    <p class="page-subtitle">Generate, view, and download inventory, maintenance, and budget reports</p>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:24px">
+
+  <!-- Inventory Report -->
+  <div class="card" style="transition:transform 0.18s;cursor:pointer" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+    <div class="card-body-custom" style="text-align:center;padding:32px 20px">
+      <div style="width:60px;height:60px;background:rgba(18,32,61,0.08);border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:26px;color:var(--navy)">
+        <i class="bi bi-box-seam-fill"></i>
+      </div>
+      <h3 style="font-family:var(--font-heading);font-size:18px;color:var(--navy);margin-bottom:6px">Inventory Report</h3>
+      <p style="font-size:13px;color:var(--ink-muted);margin-bottom:20px">Complete list of all assets with details, status, and cost information</p>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <a href="{{ url_for('reports.inventory') }}" class="btn btn-primary btn-sm">
+          <i class="bi bi-eye me-1"></i>View Report
+        </a>
+        <div style="display:flex;gap:6px">
+          <a href="{{ url_for('reports.inventory', format='pdf') }}" class="btn btn-outline-primary btn-sm flex-1">
+            <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+          </a>
+          <a href="{{ url_for('reports.inventory', format='excel') }}" class="btn btn-outline-primary btn-sm flex-1">
+            <i class="bi bi-file-earmark-excel me-1"></i>Excel
+          </a>
+          <a href="{{ url_for('reports.inventory', format='csv') }}" class="btn btn-outline-primary btn-sm flex-1">
+            <i class="bi bi-filetype-csv me-1"></i>CSV
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Maintenance Report -->
+  <div class="card" style="transition:transform 0.18s;cursor:pointer" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+    <div class="card-body-custom" style="text-align:center;padding:32px 20px">
+      <div style="width:60px;height:60px;background:var(--warning-tint);border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:26px;color:var(--warning)">
+        <i class="bi bi-tools"></i>
+      </div>
+      <h3 style="font-family:var(--font-heading);font-size:18px;color:var(--navy);margin-bottom:6px">Maintenance Report</h3>
+      <p style="font-size:13px;color:var(--ink-muted);margin-bottom:20px">All maintenance requests, costs, status, and technician activity</p>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <a href="{{ url_for('reports.maintenance') }}" class="btn btn-primary btn-sm">
+          <i class="bi bi-eye me-1"></i>View Report
+        </a>
+        <div style="display:flex;gap:6px">
+          <a href="{{ url_for('reports.maintenance', format='pdf') }}" class="btn btn-outline-primary btn-sm flex-1">
+            <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+          </a>
+          <a href="{{ url_for('reports.maintenance', format='excel') }}" class="btn btn-outline-primary btn-sm flex-1">
+            <i class="bi bi-file-earmark-excel me-1"></i>Excel
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Budget Report -->
+  <div class="card" style="transition:transform 0.18s;cursor:pointer" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+    <div class="card-body-custom" style="text-align:center;padding:32px 20px">
+      <div style="width:60px;height:60px;background:var(--success-tint);border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:26px;color:var(--success)">
+        <i class="bi bi-wallet2"></i>
+      </div>
+      <h3 style="font-family:var(--font-heading);font-size:18px;color:var(--navy);margin-bottom:6px">Budget Report</h3>
+      <p style="font-size:13px;color:var(--ink-muted);margin-bottom:20px">Annual budget estimates vs. actual spend by department</p>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <a href="{{ url_for('reports.budget') }}" class="btn btn-primary btn-sm">
+          <i class="bi bi-eye me-1"></i>View Report
+        </a>
+        <div style="display:flex;gap:6px">
+          <a href="{{ url_for('reports.budget', format='pdf') }}" class="btn btn-outline-primary btn-sm flex-1">
+            <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+          </a>
+          <a href="{{ url_for('reports.budget', format='excel') }}" class="btn btn-outline-primary btn-sm flex-1">
+            <i class="bi bi-file-earmark-excel me-1"></i>Excel
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if current_user.is_admin %}
+<!-- QR Label Sheet -->
+<div class="card">
+  <div class="card-header-custom">
+    <h3 class="card-title"><i class="bi bi-printer-fill me-2" style="color:var(--brass)"></i>Bulk QR Label Sheet</h3>
+  </div>
+  <div class="card-body-custom">
+    <p style="font-size:13px;color:var(--ink-muted);margin-bottom:16px">
+      Generate a printable A4 PDF sheet of QR code labels for physically tagging real assets.
+    </p>
+    <form action="{{ url_for('reports.qr_labels') }}" method="POST" class="d-flex gap-3 flex-wrap align-items-end">
+      <div style="flex:2;min-width:200px">
+        <label class="form-label-custom">Select Departments (leave blank for all)</label>
+        <select name="departments" multiple class="form-control-custom" style="height:120px">
+          {% for d in departments %}
+          <option value="{{ d.id }}">{{ d.name }} ({{ d.code }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <button type="submit" class="btn btn-brass">
+          <i class="bi bi-qr-code me-2"></i>Generate QR Label PDF
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

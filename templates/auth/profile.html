@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">My Profile</h1>
+</div>
+<div style="max-width:480px">
+  <div class="card">
+    <div class="card-body-custom">
+      <form method="POST">
+        <div style="display:grid;gap:16px">
+          <div>
+            <label class="form-label-custom">Full Name</label>
+            <input type="text" name="full_name" class="form-control-custom" value="{{ current_user.full_name or '' }}" />
+          </div>
+          <div>
+            <label class="form-label-custom">Email</label>
+            <input type="email" name="email" class="form-control-custom" value="{{ current_user.email }}" required />
+          </div>
+          <div class="section-divider"></div>
+          <p style="font-size:12px;color:var(--ink-muted);margin:0">Change password (leave blank to keep current)</p>
+          <div>
+            <label class="form-label-custom">Current Password</label>
+            <input type="password" name="current_password" class="form-control-custom" />
+          </div>
+          <div>
+            <label class="form-label-custom">New Password</label>
+            <input type="password" name="new_password" class="form-control-custom" />
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary mt-4">Save Changes</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
