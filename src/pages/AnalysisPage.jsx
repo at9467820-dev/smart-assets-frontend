@@ -18,7 +18,7 @@ export function AnalysisPage({ assets = [], departments = [] }) {
       <div className="page-header">
         <div>
           <h1 className="page-title">
-            <i className="bi bi-graph-up-arrow me-2" style={{ color: 'var(--brass)' }}></i>
+            <i className="bi bi-graph-up-arrow me-2" style={{ color: 'var(--primary)' }}></i>
             Asset Utilization &amp; Risk Analysis
           </h1>
           <p className="page-subtitle">Underutilized assets, frequently repaired items, and AI predictive risk assessment</p>
@@ -29,7 +29,7 @@ export function AnalysisPage({ assets = [], departments = [] }) {
       <div className="card mb-4">
         <div className="card-header-custom">
           <h3 className="card-title">
-            <i className="bi bi-bar-chart-steps me-2" style={{ color: 'var(--brass)' }}></i>
+            <i className="bi bi-bar-chart-steps me-2" style={{ color: 'var(--primary)' }}></i>
             Department Utilization &amp; Active Deployments
           </h3>
         </div>
@@ -163,7 +163,7 @@ export function AnalysisPage({ assets = [], departments = [] }) {
       <div className="card mt-4">
         <div className="card-header-custom">
           <h3 className="card-title">
-            <i className="bi bi-building me-2" style={{ color: 'var(--brass)' }}></i>
+            <i className="bi bi-building me-2" style={{ color: 'var(--primary)' }}></i>
             Campus Department Statistics
           </h3>
         </div>

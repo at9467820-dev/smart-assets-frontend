@@ -7,6 +7,7 @@ export function AssetsPage({
   onOpenMaintenanceModal,
   onOpenNewAsset,
   onOpenScanner,
+  onOpenLabelStudio,
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -53,6 +54,21 @@ export function AssetsPage({
     };
   };
 
+  const handleExportFilteredCsv = () => {
+    let csv = 'data:text/csv;charset=utf-8,';
+    csv += 'Asset Tag,Name,Category,Department,Location,Cost,Status,Serial Number\n';
+    filteredAssets.forEach((a) => {
+      csv += `"${a.asset_tag}","${a.name}","${a.category}","${a.department_name || ''}","${a.location || ''}",${a.purchase_cost || 0},"${a.status}","${a.serial_number || ''}"\n`;
+    });
+    const encoded = encodeURI(csv);
+    const link = document.createElement('a');
+    link.setAttribute('href', encoded);
+    link.setAttribute('download', `assetpulse_filtered_assets_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
+
   return (
     <div>
       {/* ── Page Header ─────────────────────────────────────── */}
@@ -63,7 +79,15 @@ export function AssetsPage({
             {filteredAssets.length} asset{filteredAssets.length !== 1 ? 's' : ''} found in campus inventory
           </p>
         </div>
-        <div className="d-flex gap-2">
+        <div className="d-flex gap-2 flex-wrap">
+          <button type="button" className="btn btn-secondary btn-sm" onClick={handleExportFilteredCsv} title="Export current filtered list to CSV">
+            <i className="bi bi-file-earmark-arrow-down me-1"></i>Export CSV
+          </button>
+          {onOpenLabelStudio && (
+            <button type="button" className="btn btn-secondary btn-sm" onClick={() => onOpenLabelStudio(null)} title="Print QR Stickers">
+              <i className="bi bi-printer me-1"></i>Print Labels
+            </button>
+          )}
           <button type="button" className="btn btn-outline-primary btn-sm" onClick={onOpenScanner}>
             <i className="bi bi-qr-code-scan me-1"></i>Scan QR
           </button>
@@ -403,7 +427,7 @@ export function AssetsPage({
                           {[1, 3, 5].map((y) => (
                             <button
                               key={y}
-                              className={`btn btn-xs ${deprYears === y ? 'btn-brass' : 'btn-outline-primary'}`}
+                              className={`btn btn-xs ${deprYears === y ? 'btn-primary' : 'btn-secondary'}`}
                               onClick={() => setDeprYears(y)}
                             >
                               Year {y}
@@ -480,14 +504,14 @@ export function AssetsPage({
               <div className="d-flex justify-content-end gap-2 mt-4 pt-3" style={{ borderTop: '1px solid var(--hairline)' }}>
                 <button
                   type="button"
-                  className="btn btn-brass btn-sm"
+                  className="btn btn-secondary btn-sm"
                   onClick={() => {
                     const a = selectedAsset;
                     setSelectedAsset(null);
                     onOpenIssueModal(a);
                   }}
                 >
-                  <i className="bi bi-file-earmark-person-fill me-1"></i>Issue Material (Parchi)
+                  <i className="bi bi-file-earmark-person me-1"></i>Issue Material (Parchi)
                 </button>
                 <button
                   type="button"

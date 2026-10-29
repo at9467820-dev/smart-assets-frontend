@@ -18,7 +18,7 @@ export function BudgetPage({ departments = [], assets = [] }) {
       <div className="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div>
           <h1 className="page-title">
-            <i className="bi bi-wallet2 me-2" style={{ color: 'var(--brass)' }}></i>
+            <i className="bi bi-wallet2 me-2 text-primary"></i>
             Budget &amp; Cost Estimation
           </h1>
           <p className="page-subtitle">FY2026-27 — Auto-computed from asset depreciation &amp; maintenance records</p>
@@ -68,7 +68,7 @@ export function BudgetPage({ departments = [], assets = [] }) {
       <div className="card">
         <div className="card-header-custom">
           <h3 className="card-title">
-            <i className="bi bi-table me-2" style={{ color: 'var(--brass)' }}></i>
+            <i className="bi bi-table me-2 text-primary"></i>
             Department Breakdown &amp; Variance
           </h3>
         </div>

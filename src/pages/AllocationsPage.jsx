@@ -20,7 +20,7 @@ export function AllocationsPage({ assets = [], departments = [] }) {
       <div className="page-header">
         <div>
           <h1 className="page-title">
-            <i className="bi bi-arrow-left-right me-2" style={{ color: 'var(--brass)' }}></i>
+            <i className="bi bi-arrow-left-right me-2 text-primary"></i>
             Allocation &amp; Custody History
           </h1>
           <p className="page-subtitle">Track every equipment handover, department transfer, and custodian change</p>

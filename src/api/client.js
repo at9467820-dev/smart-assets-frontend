@@ -3,8 +3,9 @@
  * Connected to Render Live Backend: https://smart-assets.onrender.com
  */
 
-// Use environment variable if provided, else default to deployed backend URL
-const API_BASE = (import.meta.env.VITE_API_URL || 'https://smart-assets.onrender.com/api').replace(/\/+$/, '');
+// Intelligent API Base: in local browser dev, prefer relative /api proxy to avoid CORS and connect with local backend
+const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+const API_BASE = (import.meta.env.VITE_API_URL || (isLocal ? '/api' : 'https://smart-assets.onrender.com/api')).replace(/\/+$/, '');
 
 async function fetchJson(endpoint, options = {}) {
   try {
@@ -44,6 +45,18 @@ export const api = {
     };
   },
 
+  // Notifications & Alerts Feed
+  async getNotifications() {
+    const data = await fetchJson('/notifications');
+    if (data?.alerts) return data;
+    return {
+      alerts: [],
+      unread_count: 0,
+      critical_count: 0,
+      high_count: 0,
+    };
+  },
+
   // Assets
   async getAssets(params = {}) {
     const query = new URLSearchParams(params).toString();
@@ -75,6 +88,13 @@ export const api = {
     });
   },
 
+  async bulkImportAssets(assetsList) {
+    return await fetchJson('/assets/bulk-import', {
+      method: 'POST',
+      body: JSON.stringify({ assets: assetsList }),
+    });
+  },
+
   // Material Issues & Gate Passes (Parchi)
   async getIssues(params = {}) {
     const query = new URLSearchParams(params).toString();
@@ -96,10 +116,15 @@ export const api = {
     });
   },
 
-  // Maintenance
+  // Maintenance & Calendar
   async getMaintenance() {
     const data = await fetchJson('/maintenance');
     return data?.maintenance || [];
+  },
+
+  async getMaintenanceSchedule() {
+    const data = await fetchJson('/maintenance/schedule');
+    return data?.events || [];
   },
 
   async createMaintenance(maintData) {
@@ -129,6 +154,12 @@ export const api = {
     });
   },
 
+  // Enterprise Vendors / Suppliers
+  async getVendors() {
+    const data = await fetchJson('/vendors');
+    return data?.vendors || [];
+  },
+
   // Departments
   async getDepartments() {
     const data = await fetchJson('/departments');
@@ -139,4 +170,10 @@ export const api = {
   async lookupIdentifier(identifier) {
     return await fetchJson(`/lookup/${encodeURIComponent(identifier)}`);
   },
+
+  // Export URLs
+  getExportUrl(type) {
+    return `${API_BASE}/export/${type}`;
+  },
 };
+

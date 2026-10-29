@@ -3,66 +3,71 @@ import React from 'react';
 export function Sidebar({ currentTab, setTab, overdueCount = 0, maintCount = 0, onOpenAuth }) {
   const navSections = [
     {
-      title: 'Menu',
+      title: 'Operations',
       items: [
-        { id: 'dashboard', label: 'Overview', icon: 'bi-grid-1x2-fill' },
-        { id: 'assets', label: 'Assets', icon: 'bi-box-seam-fill' },
+        { id: 'dashboard', label: 'Overview', icon: 'bi-grid-1x2' },
+        { id: 'assets', label: 'Assets Registry', icon: 'bi-box-seam' },
         {
           id: 'issues',
           label: 'Material Issues',
-          icon: 'bi-file-earmark-person-fill',
+          icon: 'bi-file-earmark-person',
           badge: overdueCount > 0 ? overdueCount : null,
-          badgeStyle: { background: 'var(--danger)' },
+          badgeStyle: { background: 'var(--danger)', color: '#ffffff' },
         },
         {
           id: 'maintenance',
           label: 'Maintenance',
           icon: 'bi-tools',
           badge: maintCount > 0 ? maintCount : null,
+          badgeStyle: { background: '#334155', color: '#ffffff' },
         },
+        { id: 'calendar', label: 'Service Calendar', icon: 'bi-calendar3' },
         { id: 'allocations', label: 'Allocations', icon: 'bi-arrow-left-right' },
       ],
     },
     {
-      title: 'Finance & Procurement',
+      title: 'Finance & Supply',
       items: [
-        { id: 'orders', label: 'Asset Orders', icon: 'bi-cart-check-fill' },
-        { id: 'budget', label: 'Budget & Reports', icon: 'bi-wallet2' },
+        { id: 'orders', label: 'Orders & Vendors', icon: 'bi-cart3' },
+        { id: 'budget', label: 'Budget Allocations', icon: 'bi-wallet2' },
+        { id: 'depreciation', label: 'Lifecycle Simulator', icon: 'bi-calculator' },
       ],
     },
     {
-      title: 'Intelligence',
+      title: 'Analytics & Tools',
       items: [
-        { id: 'analysis', label: 'Analysis', icon: 'bi-graph-up-arrow' },
+        { id: 'analysis', label: 'Risk Intelligence', icon: 'bi-graph-up' },
+        { id: 'datahub', label: 'Data Hub & Backup', icon: 'bi-database-gear' },
         { id: 'scanner', label: 'QR Scanner', icon: 'bi-qr-code-scan' },
       ],
     },
     {
-      title: 'Administration',
+      title: 'Governance',
       items: [
-        { id: 'audit_logs', label: 'Audit Trail', icon: 'bi-shield-check' },
+        { id: 'audit_logs', label: 'Security Audit Trail', icon: 'bi-shield-check' },
       ],
     },
   ];
 
   return (
     <nav id="sidebar" aria-label="Main navigation">
-      {/* Brand with SVG Logo */}
+      {/* Brand Header */}
       <div className="sidebar-brand">
         <div className="sidebar-logo-icon">
-          <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="2" y="2" width="48" height="48" rx="12" fill="#091A17" stroke="#10B981" strokeWidth="1.5" />
-            <g transform="translate(12, 11)">
-              <path d="M4 24V8L10 4V20L4 24Z" fill="#10B981" />
-              <path d="M10 4L22 20V26L10 10V4Z" fill="#D4AF37" />
-              <path d="M22 8V24L16 28V12L22 8Z" fill="#059669" opacity="0.9" />
-              <circle cx="22" cy="8" r="2.5" fill="#FDE047" />
-            </g>
+          <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="36" height="36" rx="8" fill="#2563EB" />
+            <path
+              d="M10 18H14L16.5 12L19.5 24L22 18H26"
+              stroke="#FFFFFF"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         </div>
         <div className="sidebar-brand-text">
           <span className="sidebar-brand-name">AssetPulse</span>
-          <span className="sidebar-brand-sub">Smart Asset Registry</span>
+          <span className="sidebar-brand-sub">Asset Management</span>
         </div>
       </div>
 
@@ -97,22 +102,22 @@ export function Sidebar({ currentTab, setTab, overdueCount = 0, maintCount = 0, 
         ))}
       </div>
 
-      {/* User Footer */}
+      {/* User Profile Footer */}
       <div className="sidebar-footer">
         <div className="sidebar-user">
           <div className="sidebar-avatar">
-            <img src="/img/avatar-admin.jpg" alt="Admin" onError={(e) => { e.target.style.display = 'none'; }} />
+            <i className="bi bi-person-fill" style={{ fontSize: '16px' }}></i>
           </div>
           <div className="sidebar-user-info">
             <div className="sidebar-user-name">Administrator</div>
-            <div className="sidebar-user-role">admin</div>
+            <div className="sidebar-user-role">Superuser &bull; HQ Admin</div>
           </div>
           <button
             type="button"
             className="btn-icon ms-auto"
-            title="Authentication & Profiles"
+            title="Sign in / Profile"
             onClick={onOpenAuth}
-            style={{ border: 'none', background: 'transparent' }}
+            style={{ border: 'none', background: 'transparent', color: '#94A3B8' }}
           >
             <i className="bi bi-box-arrow-right"></i>
           </button>

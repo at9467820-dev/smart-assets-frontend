@@ -82,9 +82,10 @@ export function AuthModal({ isOpen, onClose }) {
           <div
             className="animate-in"
             style={{
-              background: '#0e1f1c',
-              borderRadius: '20px',
-              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6)',
+              background: '#111827',
+              borderRadius: '12px',
+              border: '1px solid #1F2937',
+              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6)',
               display: 'grid',
               gridTemplateColumns: '1.1fr 1fr',
               overflow: 'hidden',
@@ -94,8 +95,9 @@ export function AuthModal({ isOpen, onClose }) {
             {/* Left Brand Panel */}
             <div
               style={{
-                background: 'linear-gradient(180deg, rgba(5, 18, 16, 0.6), rgba(5, 18, 16, 0.95)), url(/img/college-campus.jpg) center / cover',
-                padding: '44px 38px',
+                background: '#0B1120',
+                borderRight: '1px solid #1F2937',
+                padding: '40px 36px',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
@@ -103,51 +105,50 @@ export function AuthModal({ isOpen, onClose }) {
             >
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ width: '42px', height: '42px' }}>
-                    <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
-                      <rect x="2" y="2" width="48" height="48" rx="12" fill="#0E1F1C" />
-                      <polyline
-                        points="10,26 17,26 21,14 25,38 29,10 33,36 37,20 41,26 46,26"
-                        stroke="#D4AF37"
-                        strokeWidth="2.5"
+                  <div style={{ width: '36px', height: '36px' }}>
+                    <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                      <rect width="36" height="36" rx="8" fill="#2563EB" />
+                      <path
+                        d="M10 18H14L16.5 12L19.5 24L22 18H26"
+                        stroke="#FFFFFF"
+                        strokeWidth="2.2"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        fill="none"
                       />
                     </svg>
                   </div>
                   <div>
-                    <h2 style={{ fontFamily: 'Fraunces, serif', fontSize: '24px', fontWeight: 700, color: '#fff', margin: 0 }}>
-                      Asset<span style={{ color: '#10B981' }}>Pulse</span>
+                    <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '20px', fontWeight: 700, color: '#fff', margin: 0 }}>
+                      AssetPulse
                     </h2>
-                    <span style={{ fontSize: '10px', color: '#D4AF37', letterSpacing: '0.15em', textTransform: 'uppercase', fontWeight: 700 }}>
-                      Smart Asset Management
+                    <span style={{ fontSize: '10px', color: '#94A3B8', letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 600 }}>
+                      Asset Management
                     </span>
                   </div>
                 </div>
 
-                <div style={{ margin: '36px 0 24px' }}>
-                  <h3 style={{ fontFamily: 'Fraunces, serif', fontSize: '24px', fontWeight: 600, color: '#fff', lineHeight: 1.3, marginBottom: '20px' }}>
-                    Institutional asset tracking, redefined.
+                <div style={{ margin: '32px 0 24px' }}>
+                  <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '20px', fontWeight: 600, color: '#fff', lineHeight: 1.35, marginBottom: '20px' }}>
+                    Institutional asset tracking &amp; inventory control.
                   </h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: '#cbd5e1' }}>
-                      <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'rgba(37, 99, 235, 0.15)', color: '#3B82F6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <i className="bi bi-qr-code-scan"></i>
                       </div>
-                      <span>Instant QR Scanner &amp; Gate Pass Slip (Parchi)</span>
+                      <span>Instant QR Scanner &amp; Gate Pass Slips (Parchi)</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: '#cbd5e1' }}>
-                      <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <i className="bi bi-graph-up-arrow"></i>
+                      <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'rgba(37, 99, 235, 0.15)', color: '#3B82F6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <i className="bi bi-graph-up"></i>
                       </div>
-                      <span>Real-Time Depreciation &amp; Risk Analytics</span>
+                      <span>Real-Time Depreciation &amp; Lifecycle Analytics</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: '#cbd5e1' }}>
-                      <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'rgba(37, 99, 235, 0.15)', color: '#3B82F6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <i className="bi bi-shield-check"></i>
                       </div>
-                      <span>Immutable Audit Trail &amp; Clearance Roles</span>
+                      <span>Immutable Security Trail &amp; Audit Logs</span>
                     </div>
                   </div>
                 </div>
@@ -160,9 +161,9 @@ export function AuthModal({ isOpen, onClose }) {
             </div>
 
             {/* Right Form Panel */}
-            <div style={{ padding: '40px 36px', display: 'flex', flexDirection: 'column', justifyContent: 'center', background: '#0e1f1c' }}>
+            <div style={{ padding: '40px 36px', display: 'flex', flexDirection: 'column', justifyContent: 'center', background: '#111827' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                <h2 style={{ fontFamily: 'Fraunces, serif', fontSize: '24px', fontWeight: 600, color: '#fff', margin: 0 }}>
+                <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '20px', fontWeight: 600, color: '#fff', margin: 0 }}>
                   Sign In
                 </h2>
                 <button
@@ -173,7 +174,7 @@ export function AuthModal({ isOpen, onClose }) {
                   <i className="bi bi-x-lg"></i>
                 </button>
               </div>
-              <p style={{ fontSize: '13px', color: '#8e9cae', marginBottom: '22px' }}>
+              <p style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '22px' }}>
                 Access your asset management dashboard
               </p>
 
@@ -181,7 +182,7 @@ export function AuthModal({ isOpen, onClose }) {
                 <div
                   style={{
                     padding: '10px 14px',
-                    borderRadius: '8px',
+                    borderRadius: '6px',
                     fontSize: '12.5px',
                     marginBottom: '16px',
                     background: flashMsg.type === 'success' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
@@ -206,10 +207,10 @@ export function AuthModal({ isOpen, onClose }) {
                       onChange={(e) => setUsername(e.target.value)}
                       style={{
                         width: '100%',
-                        padding: '11px 14px 11px 38px',
-                        background: '#060e0c',
-                        border: '1px solid rgba(255,255,255,0.08)',
-                        borderRadius: '10px',
+                        padding: '10px 14px 10px 38px',
+                        background: '#0B0F19',
+                        border: '1px solid #1F2937',
+                        borderRadius: '6px',
                         fontSize: '13.5px',
                         color: '#fff',
                         outline: 'none',
@@ -217,7 +218,7 @@ export function AuthModal({ isOpen, onClose }) {
                       placeholder="Username or email"
                       required
                     />
-                    <i className="bi bi-person" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#526071' }}></i>
+                    <i className="bi bi-person" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }}></i>
                   </div>
                 </div>
 
@@ -229,7 +230,7 @@ export function AuthModal({ isOpen, onClose }) {
                     <a
                       href="#forgot"
                       onClick={(e) => { e.preventDefault(); setView('forgot'); }}
-                      style={{ fontSize: '11.5px', color: '#10b981', textDecoration: 'none' }}
+                      style={{ fontSize: '11.5px', color: '#3B82F6', textDecoration: 'none' }}
                     >
                       Forgot password?
                     </a>
@@ -241,10 +242,10 @@ export function AuthModal({ isOpen, onClose }) {
                       onChange={(e) => setPassword(e.target.value)}
                       style={{
                         width: '100%',
-                        padding: '11px 40px 11px 38px',
-                        background: '#060e0c',
-                        border: '1px solid rgba(255,255,255,0.08)',
-                        borderRadius: '10px',
+                        padding: '10px 40px 10px 38px',
+                        background: '#0B0F19',
+                        border: '1px solid #1F2937',
+                        borderRadius: '6px',
                         fontSize: '13.5px',
                         color: '#fff',
                         outline: 'none',
@@ -252,11 +253,11 @@ export function AuthModal({ isOpen, onClose }) {
                       placeholder="Password"
                       required
                     />
-                    <i className="bi bi-lock" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#526071' }}></i>
+                    <i className="bi bi-lock" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }}></i>
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#526071', cursor: 'pointer' }}
+                      style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}
                     >
                       <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
                     </button>
@@ -267,15 +268,15 @@ export function AuthModal({ isOpen, onClose }) {
                   type="submit"
                   style={{
                     width: '100%',
-                    padding: '12px',
-                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                    border: 'none',
-                    borderRadius: '10px',
+                    padding: '10px',
+                    background: '#2563EB',
+                    border: '1px solid #1D4ED8',
+                    borderRadius: '6px',
                     color: '#fff',
-                    fontSize: '14px',
-                    fontWeight: 700,
+                    fontSize: '13.5px',
+                    fontWeight: 600,
                     cursor: 'pointer',
-                    boxShadow: '0 4px 16px rgba(16, 185, 129, 0.3)',
+                    boxShadow: '0 1px 2px rgba(37, 99, 235, 0.2)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -287,14 +288,14 @@ export function AuthModal({ isOpen, onClose }) {
               </form>
 
               {/* Demo Credentials Bar */}
-              <div style={{ marginTop: '16px', padding: '10px 12px', background: '#060e0c', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
-                <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#d4af37', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <div style={{ marginTop: '16px', padding: '8px 12px', background: '#0B0F19', border: '1px solid #1F2937', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                <span style={{ fontSize: '10.5px', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Demo:
                 </span>
                 <button
                   type="button"
                   onClick={() => fillCreds('admin', 'admin123')}
-                  style={{ fontSize: '11px', padding: '3px 8px', background: 'rgba(16,185,129,0.12)', color: '#34d399', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 600 }}
+                  style={{ fontSize: '11px', padding: '3px 8px', background: 'rgba(59, 130, 246, 0.15)', color: '#60A5FA', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}
                 >
                   Admin
                 </button>

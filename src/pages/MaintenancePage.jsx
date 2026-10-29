@@ -32,7 +32,7 @@ export function MaintenancePage({ maintenance = [], onOpenNewMaintenance }) {
       <div className="page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
         <div>
           <h1 className="page-title">
-            <i className="bi bi-tools me-2" style={{ color: 'var(--brass)' }}></i>
+            <i className="bi bi-tools me-2 text-primary"></i>
             Maintenance &amp; Repairs
           </h1>
           <p className="page-subtitle">
@@ -137,22 +137,22 @@ export function MaintenancePage({ maintenance = [], onOpenNewMaintenance }) {
             <div
               className="stat-icon"
               style={{
-                background: 'rgba(212,175,55,0.12)',
-                color: 'var(--brass)',
-                width: '42px',
-                height: '42px',
-                borderRadius: '10px',
+                background: 'var(--primary-bg)',
+                color: 'var(--primary)',
+                width: '38px',
+                height: '38px',
+                borderRadius: 'var(--radius-sm)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '20px',
+                fontSize: '18px',
               }}
             >
               <i className="bi bi-currency-rupee"></i>
             </div>
             <div>
               <div className="stat-label">Total Spent</div>
-              <div className="stat-value" style={{ color: 'var(--brass)', fontSize: '24px', fontWeight: 700 }}>
+              <div className="stat-value" style={{ color: 'var(--heading)', fontSize: '24px', fontWeight: 700 }}>
                 ₹{totalCost.toLocaleString()}
               </div>
               <small className="text-muted">Repair expenditure</small>

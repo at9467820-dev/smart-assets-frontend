@@ -116,7 +116,7 @@ export function CommandPalette({ isOpen, onClose, onNavigate, onOpenNewIssue, on
     >
       <div className="cmd-palette-card animate-in">
         <div className="cmd-palette-header">
-          <i className="bi bi-search" style={{ color: 'var(--brass)', fontSize: '18px' }}></i>
+          <i className="bi bi-search" style={{ color: 'var(--primary)', fontSize: '18px' }}></i>
           <input
             type="text"
             id="cmd-input"

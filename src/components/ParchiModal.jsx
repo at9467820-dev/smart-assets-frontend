@@ -43,7 +43,7 @@ export function ParchiModal({ issue, onClose, onReturnClick }) {
             {issue.status === 'issued' && onReturnClick && (
               <button
                 type="button"
-                className="btn btn-brass btn-sm"
+                className="btn btn-secondary btn-sm"
                 onClick={() => {
                   onClose();
                   onReturnClick(issue);

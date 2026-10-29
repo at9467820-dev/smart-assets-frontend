@@ -238,7 +238,7 @@ export function IssuesPage({
               </button>
               <button
                 type="button"
-                className={`btn btn-sm ${activeTab === 'returned' ? 'btn-brass' : 'btn-outline-primary'}`}
+                className={`btn btn-sm ${activeTab === 'returned' ? 'btn-secondary' : 'btn-outline-primary'}`}
                 onClick={() => setActiveTab('returned')}
               >
                 <i className="bi bi-check-circle me-1"></i>Returned ({returnedIssues.length})
@@ -361,7 +361,7 @@ export function IssuesPage({
                         {!isReturned && (
                           <button
                             type="button"
-                            className="btn btn-brass btn-xs"
+                            className="btn btn-secondary btn-xs"
                             onClick={() => onOpenReturnModal(iss)}
                             title="Return Asset and Clear Gate Pass"
                           >

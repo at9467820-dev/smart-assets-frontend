@@ -3,10 +3,15 @@ import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { CommandPalette } from './components/CommandPalette';
 import { AuthModal } from './components/AuthModal';
+import { NotificationDrawer } from './components/NotificationDrawer';
+import { LabelStudioModal } from './components/LabelStudioModal';
 import { Dashboard } from './pages/Dashboard';
 import { AssetsPage } from './pages/AssetsPage';
 import { IssuesPage } from './pages/IssuesPage';
 import { MaintenancePage } from './pages/MaintenancePage';
+import { MaintenanceCalendarPage } from './pages/MaintenanceCalendarPage';
+import { DepreciationSimulatorPage } from './pages/DepreciationSimulatorPage';
+import { DataHubPage } from './pages/DataHubPage';
 import { OrdersPage } from './pages/OrdersPage';
 import { BudgetPage } from './pages/BudgetPage';
 import { AnalysisPage } from './pages/AnalysisPage';
@@ -24,6 +29,7 @@ import { api } from './api/client';
 export function App() {
   const [currentTab, setTab] = useState('dashboard');
   const [theme, setTheme] = useState(localStorage.getItem('ap-theme') || 'dark');
+  const [accent, setAccent] = useState(localStorage.getItem('ap-accent') || 'indigo');
 
   // Data States
   const [stats, setStats] = useState(null);
@@ -32,11 +38,15 @@ export function App() {
   const [maintenance, setMaintenance] = useState([]);
   const [orders, setOrders] = useState([]);
   const [departments, setDepartments] = useState([]);
+  const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Modal States
+  // Modal & Drawer States
   const [isCmdOpen, setIsCmdOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isLabelStudioOpen, setIsLabelStudioOpen] = useState(false);
+  const [labelStudioAsset, setLabelStudioAsset] = useState(null);
   const [viewParchiIssue, setViewParchiIssue] = useState(null);
   const [issueModalAsset, setIssueModalAsset] = useState(null);
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
@@ -46,11 +56,13 @@ export function App() {
   const [isNewAssetModalOpen, setIsNewAssetModalOpen] = useState(false);
   const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false);
 
-  // Apply Theme
+  // Apply Theme & Accent to document element
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.setAttribute('data-accent', accent);
     localStorage.setItem('ap-theme', theme);
-  }, [theme]);
+    localStorage.setItem('ap-accent', accent);
+  }, [theme, accent]);
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
@@ -68,17 +80,18 @@ export function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Fetch initial data
+  // Fetch initial data & live notifications
   const loadData = async () => {
     setLoading(true);
     try {
-      const [statsData, assetsData, issuesData, maintData, ordersData, deptsData] = await Promise.all([
+      const [statsData, assetsData, issuesData, maintData, ordersData, deptsData, notifsData] = await Promise.all([
         api.getDashboardStats(),
         api.getAssets(),
         api.getIssues(),
         api.getMaintenance(),
         api.getOrders(),
         api.getDepartments(),
+        api.getNotifications(),
       ]);
 
       setStats(statsData);
@@ -87,6 +100,7 @@ export function App() {
       setMaintenance(maintData || []);
       setOrders(ordersData || []);
       setDepartments(deptsData || []);
+      setNotifications(notifsData?.alerts || []);
     } catch (err) {
       console.warn('API sync: Using cached / mock state', err);
     } finally {
@@ -157,7 +171,16 @@ export function App() {
       <div id="main-content">
         <Header
           theme={theme}
+          setTheme={setTheme}
           toggleTheme={toggleTheme}
+          accent={accent}
+          setAccent={setAccent}
+          unreadCount={notifications.length}
+          onOpenNotifications={() => setIsNotificationsOpen(true)}
+          onOpenLabelStudio={() => {
+            setLabelStudioAsset(null);
+            setIsLabelStudioOpen(true);
+          }}
           onOpenScanner={() => setTab('scanner')}
           onOpenCmdPalette={() => setIsCmdOpen(true)}
           onOpenAuth={() => setIsAuthOpen(true)}
@@ -199,6 +222,10 @@ export function App() {
               }}
               onOpenNewAsset={() => setIsNewAssetModalOpen(true)}
               onOpenScanner={() => setTab('scanner')}
+              onOpenLabelStudio={(asset) => {
+                setLabelStudioAsset(asset);
+                setIsLabelStudioOpen(true);
+              }}
             />
           )}
 
@@ -225,6 +252,16 @@ export function App() {
             />
           )}
 
+          {currentTab === 'calendar' && (
+            <MaintenanceCalendarPage
+              maintenance={maintenance}
+              onOpenNewMaintenance={(asset) => {
+                setMaintenanceModalAsset(asset);
+                setIsMaintenanceModalOpen(true);
+              }}
+            />
+          )}
+
           {currentTab === 'orders' && (
             <OrdersPage
               orders={orders}
@@ -235,6 +272,23 @@ export function App() {
 
           {currentTab === 'budget' && (
             <BudgetPage departments={departments} assets={assets} />
+          )}
+
+          {currentTab === 'depreciation' && (
+            <DepreciationSimulatorPage
+              assets={assets}
+              departments={departments}
+            />
+          )}
+
+          {currentTab === 'datahub' && (
+            <DataHubPage
+              assets={assets}
+              issues={issues}
+              maintenance={maintenance}
+              departments={departments}
+              onDataRefreshed={loadData}
+            />
           )}
 
           {currentTab === 'analysis' && (
@@ -284,6 +338,23 @@ export function App() {
 
       {/* ── Authentication & Password Reset Modal ────────────── */}
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
+
+      {/* ── Real-Time Notification Center Drawer ─────────────── */}
+      <NotificationDrawer
+        isOpen={isNotificationsOpen}
+        onClose={() => setIsNotificationsOpen(false)}
+        notifications={notifications}
+        onNavigate={(tab) => setTab(tab)}
+        onMarkAllRead={() => setNotifications([])}
+      />
+
+      {/* ── Printable QR & Barcode Label Studio Modal ─────────── */}
+      <LabelStudioModal
+        isOpen={isLabelStudioOpen}
+        onClose={() => setIsLabelStudioOpen(false)}
+        assets={assets}
+        defaultAsset={labelStudioAsset}
+      />
 
       {/* ── Parchi Gate Pass Slip Modal ──────────────────────── */}
       {viewParchiIssue && (

@@ -216,10 +216,10 @@ export function ScannerPage({
               <div className="d-flex gap-2 flex-wrap pt-3" style={{ borderTop: '1px solid var(--hairline)' }}>
                 <button
                   type="button"
-                  className="btn btn-brass btn-sm flex-fill"
+                  className="btn btn-secondary btn-sm flex-fill"
                   onClick={() => onOpenIssueModal(scannedAsset)}
                 >
-                  <i className="bi bi-file-earmark-person-fill me-1"></i>Issue Material (Parchi)
+                  <i className="bi bi-file-earmark-person me-1"></i>Issue Material (Parchi)
                 </button>
                 <button
                   type="button"

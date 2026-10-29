@@ -42,18 +42,28 @@
   <div class="sidebar-brand">
     <div class="sidebar-logo-icon">
       <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="2" y="2" width="48" height="48" rx="12" fill="#091A17" stroke="#10B981" stroke-width="1.5"/>
-        <g transform="translate(12, 11)">
-          <path d="M4 24V8L10 4V20L4 24Z" fill="#10B981" />
-          <path d="M10 4L22 20V26L10 10V4Z" fill="#D4AF37" />
-          <path d="M22 8V24L16 28V12L22 8Z" fill="#059669" opacity="0.9" />
-          <circle cx="22" cy="8" r="2.5" fill="#FDE047" />
+        <defs>
+          <linearGradient id="flaskBrandGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#6366F1" />
+            <stop offset="100%" stopColor="#4F46E5" />
+          </linearGradient>
+          <linearGradient id="flaskBrandGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#22D3EE" />
+            <stop offset="100%" stopColor="#06B6D4" />
+          </linearGradient>
+        </defs>
+        <rect x="2" y="2" width="48" height="48" rx="14" fill="#0B132B" stroke="url(#flaskBrandGrad1)" stroke-width="1.75"/>
+        <g transform="translate(13, 12)">
+          <polygon points="13,0 26,7.5 13,15 0,7.5" fill="url(#flaskBrandGrad2)" />
+          <polygon points="0,7.5 13,15 13,30 0,22.5" fill="#4F46E5" />
+          <polygon points="13,15 26,7.5 26,22.5 13,30" fill="#6366F1" opacity="0.9" />
+          <circle cx="13" cy="7.5" r="2.5" fill="#FFFFFF" />
         </g>
       </svg>
     </div>
     <div class="sidebar-brand-text">
       <span class="sidebar-brand-name">AssetPulse</span>
-      <span class="sidebar-brand-sub">Smart Asset Registry</span>
+      <span class="sidebar-brand-sub">Enterprise SAMS 4.0</span>
     </div>
   </div>
 
