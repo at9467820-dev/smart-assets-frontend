@@ -40,13 +40,20 @@ export function IssuesPage({
       // Search filter
       if (!searchQuery) return true;
       const q = searchQuery.toLowerCase();
+      const person = (i.issued_to_name || i.recipient_name || '').toLowerCase();
+      const aName = (i.asset_name || i.asset?.name || '').toLowerCase();
+      const aTag = (i.asset_tag || i.asset?.asset_tag || '').toLowerCase();
+      const dept = (i.issued_to_dept || i.department?.name || '').toLowerCase();
+      const purpose = (i.purpose || '').toLowerCase();
+      const slip = (i.slip_number || '').toLowerCase();
+
       return (
-        (i.slip_number && i.slip_number.toLowerCase().includes(q)) ||
-        (i.recipient_name && i.recipient_name.toLowerCase().includes(q)) ||
-        (i.asset?.name && i.asset.name.toLowerCase().includes(q)) ||
-        (i.asset?.asset_tag && i.asset.asset_tag.toLowerCase().includes(q)) ||
-        (i.department?.name && i.department.name.toLowerCase().includes(q)) ||
-        (i.purpose && i.purpose.toLowerCase().includes(q))
+        slip.includes(q) ||
+        person.includes(q) ||
+        aName.includes(q) ||
+        aTag.includes(q) ||
+        dept.includes(q) ||
+        purpose.includes(q)
       );
     });
   }, [issues, activeTab, searchQuery, now]);
@@ -311,21 +318,23 @@ export function IssuesPage({
                     </td>
                     <td>
                       <div style={{ fontWeight: 600, color: 'var(--heading)' }}>
-                        {iss.asset?.name || 'Lab Equipment'}
+                        {iss.asset_name || iss.asset?.name || 'Equipment Unit'}
                       </div>
                       <small className="text-muted">
                         <i className="bi bi-tag me-1"></i>
-                        {iss.asset?.asset_tag || 'CSE-001'}
+                        {iss.asset_tag || iss.asset?.asset_tag || 'N/A'}
                       </small>
                     </td>
                     <td>
-                      <div style={{ fontWeight: 500 }}>{iss.recipient_name}</div>
+                      <div style={{ fontWeight: 500 }}>
+                        {iss.issued_to_name || iss.recipient_name || 'N/A'}
+                      </div>
                       <small className="text-muted">
-                        {iss.recipient_designation || 'Faculty / Staff'}
-                        {iss.recipient_phone ? ` · ${iss.recipient_phone}` : ''}
+                        {iss.issued_to_id_number || iss.recipient_designation || 'Faculty / Staff'}
+                        {iss.issued_to_phone ? ` · ${iss.issued_to_phone}` : ''}
                       </small>
                     </td>
-                    <td>{iss.department?.name || 'General'}</td>
+                    <td>{iss.issued_to_dept || iss.department?.name || 'General'}</td>
                     <td style={{ fontSize: '12px' }}>{iss.issue_date || 'Today'}</td>
                     <td style={{ fontSize: '12px', color: isOverdue ? 'var(--danger)' : 'inherit', fontWeight: isOverdue ? 700 : 400 }}>
                       {iss.expected_return_date || 'Permanent'}

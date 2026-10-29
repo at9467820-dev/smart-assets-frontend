@@ -183,9 +183,28 @@ export function MaintenancePage({ maintenance = [], onOpenNewMaintenance }) {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="form-control-custom"
-                style={{ paddingLeft: '34px' }}
+                style={{ paddingLeft: '34px', paddingRight: searchQuery ? '30px' : '12px' }}
                 placeholder="Search ticket, asset tag, fault..."
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  style={{
+                    position: 'absolute',
+                    right: '8px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    border: 'none',
+                    background: 'transparent',
+                    color: 'var(--ink-muted)',
+                    cursor: 'pointer',
+                  }}
+                  title="Clear"
+                >
+                  <i className="bi bi-x-circle-fill"></i>
+                </button>
+              )}
             </div>
 
             {/* Status Filter */}
@@ -193,7 +212,7 @@ export function MaintenancePage({ maintenance = [], onOpenNewMaintenance }) {
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               className="form-control-custom"
-              style={{ width: '160px' }}
+              style={{ width: '150px' }}
             >
               <option value="">All Statuses</option>
               <option value="pending">Pending</option>
@@ -207,7 +226,7 @@ export function MaintenancePage({ maintenance = [], onOpenNewMaintenance }) {
               value={priorityFilter}
               onChange={(e) => setPriorityFilter(e.target.value)}
               className="form-control-custom"
-              style={{ width: '160px' }}
+              style={{ width: '150px' }}
             >
               <option value="">All Priorities</option>
               <option value="critical">Critical</option>
@@ -215,6 +234,21 @@ export function MaintenancePage({ maintenance = [], onOpenNewMaintenance }) {
               <option value="medium">Medium</option>
               <option value="low">Low</option>
             </select>
+
+            {(searchQuery || statusFilter || priorityFilter) && (
+              <button
+                type="button"
+                className="btn btn-outline-primary btn-sm"
+                onClick={() => {
+                  setSearchQuery('');
+                  setStatusFilter('');
+                  setPriorityFilter('');
+                }}
+                title="Reset filters"
+              >
+                <i className="bi bi-arrow-counterclockwise me-1"></i>Reset
+              </button>
+            )}
           </div>
         </div>
       </div>

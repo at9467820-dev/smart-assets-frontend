@@ -86,6 +86,7 @@ export function Sidebar({ currentTab, setTab, overdueCount = 0, maintCount = 0, 
                   onClick={(e) => {
                     e.preventDefault();
                     setTab(item.id);
+                    document.getElementById('sidebar')?.classList.remove('show');
                   }}
                 >
                   <i className={`bi ${item.icon}`}></i>

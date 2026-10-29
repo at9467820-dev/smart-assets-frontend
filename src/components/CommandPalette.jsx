@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from 'react';
 
-export function CommandPalette({ isOpen, onClose, onNavigate, onOpenNewIssue, onOpenNewAsset, onOpenNewOrder, onOpenNewMaintenance, onOpenScanner }) {
+export function CommandPalette({
+  isOpen,
+  onClose,
+  onNavigate,
+  onOpenNewIssue,
+  onOpenNewAsset,
+  onOpenNewOrder,
+  onOpenNewMaintenance,
+  onOpenScanner,
+  assets = [],
+  onSelectAsset,
+}) {
   const [query, setQuery] = useState('');
 
   useEffect(() => {
@@ -104,6 +115,41 @@ export function CommandPalette({ isOpen, onClose, onNavigate, onOpenNewIssue, on
       items: grp.items.filter((item) => item.label.toLowerCase().includes(query.toLowerCase())),
     }))
     .filter((grp) => grp.items.length > 0);
+
+  // Search assets inventory if user typed something
+  const matchingAssets = query.trim()
+    ? assets
+        .filter((a) => {
+          const q = query.toLowerCase();
+          return (
+            a.asset_tag?.toLowerCase().includes(q) ||
+            a.name?.toLowerCase().includes(q) ||
+            a.serial_number?.toLowerCase().includes(q) ||
+            a.location?.toLowerCase().includes(q)
+          );
+        })
+        .slice(0, 6)
+        .map((a) => ({
+          label: `${a.asset_tag} — ${a.name} (${a.department?.name || a.category || 'Asset'})`,
+          icon: 'bi-box-seam',
+          tag: a.status || 'Active',
+          handler: () => {
+            onClose();
+            if (onSelectAsset) {
+              onSelectAsset(a);
+            } else {
+              onNavigate('assets');
+            }
+          },
+        }))
+    : [];
+
+  if (matchingAssets.length > 0) {
+    filteredGroups.unshift({
+      group: `Inventory Assets (${matchingAssets.length})`,
+      items: matchingAssets,
+    });
+  }
 
   return (
     <div

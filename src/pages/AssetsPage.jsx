@@ -1,20 +1,27 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 
 export function AssetsPage({
   assets = [],
   departments = [],
+  initialSearch = '',
   onOpenIssueModal,
   onOpenMaintenanceModal,
   onOpenNewAsset,
   onOpenScanner,
   onOpenLabelStudio,
 }) {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initialSearch || '');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedDept, setSelectedDept] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
   const [selectedAsset, setSelectedAsset] = useState(null);
   const [deprYears, setDeprYears] = useState(3);
+
+  useEffect(() => {
+    if (initialSearch !== undefined && initialSearch !== null) {
+      setSearchQuery(initialSearch);
+    }
+  }, [initialSearch]);
 
   const categories = ['Computer', 'Lab Equipment', 'Networking', 'Projector', 'Electrical', 'HVAC', 'Furniture', 'Other'];
 
@@ -121,9 +128,28 @@ export function AssetsPage({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="form-control-custom"
-                  style={{ paddingLeft: '34px' }}
+                  style={{ paddingLeft: '34px', paddingRight: searchQuery ? '30px' : '12px' }}
                   placeholder="Name, tag, location, serial…"
                 />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    style={{
+                      position: 'absolute',
+                      right: '8px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      border: 'none',
+                      background: 'transparent',
+                      color: 'var(--ink-muted)',
+                      cursor: 'pointer',
+                    }}
+                    title="Clear filter"
+                  >
+                    <i className="bi bi-x-circle-fill"></i>
+                  </button>
+                )}
               </div>
             </div>
 

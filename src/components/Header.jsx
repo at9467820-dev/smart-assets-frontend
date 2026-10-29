@@ -22,8 +22,20 @@ export function Header({
   }, []);
 
   const handleSearchChange = (e) => {
-    setQuery(e.target.value);
-    if (onSearch) onSearch(e.target.value);
+    const val = e.target.value;
+    setQuery(val);
+    if (onSearch) onSearch(val, false);
+  };
+
+  const handleSearchKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (onSearch) onSearch(query, true);
+    }
+    if (e.key === 'k' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      if (onOpenCmdPalette) onOpenCmdPalette();
+    }
   };
 
   return (
@@ -33,6 +45,7 @@ export function Header({
         className="sidebar-toggle"
         id="sidebar-toggle"
         aria-label="Toggle sidebar"
+        onClick={() => document.getElementById('sidebar')?.classList.toggle('show')}
       >
         <i className="bi bi-list"></i>
       </button>
@@ -49,24 +62,42 @@ export function Header({
 
       <div className="topbar-actions">
         {/* Global Search */}
-        <div className="search-wrapper">
+        <div className="search-wrapper" style={{ position: 'relative' }}>
           <i className="bi bi-search search-icon"></i>
           <input
             type="text"
             id="global-search"
             className="search-input"
-            placeholder="Search tags, assets... (Ctrl+K)"
+            placeholder="Search tags, assets... (Enter or Ctrl+K)"
             value={query}
             onChange={handleSearchChange}
-            onKeyDown={(e) => {
-              if (e.key === 'k' && (e.ctrlKey || e.metaKey)) {
-                e.preventDefault();
-                if (onOpenCmdPalette) onOpenCmdPalette();
-              }
-            }}
+            onKeyDown={handleSearchKeyDown}
             autoComplete="off"
             aria-label="Global search"
           />
+          {query && (
+            <button
+              type="button"
+              className="btn-icon"
+              onClick={() => {
+                setQuery('');
+                if (onSearch) onSearch('', true);
+              }}
+              style={{
+                position: 'absolute',
+                right: '8px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                border: 'none',
+                background: 'transparent',
+                cursor: 'pointer',
+                color: 'var(--ink-muted)',
+              }}
+              title="Clear search"
+            >
+              <i className="bi bi-x-circle-fill" style={{ fontSize: '13px' }}></i>
+            </button>
+          )}
         </div>
 
         {/* Scan Button */}

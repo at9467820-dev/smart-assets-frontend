@@ -223,9 +223,28 @@ export function OrdersPage({ orders = [], onOpenNewOrder, onUpdateStatus }) {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="form-control-custom"
-                    style={{ paddingLeft: '34px' }}
+                    style={{ paddingLeft: '34px', paddingRight: searchQuery ? '30px' : '12px' }}
                     placeholder="Search order #, item name, vendor..."
                   />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      style={{
+                        position: 'absolute',
+                        right: '8px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        border: 'none',
+                        background: 'transparent',
+                        color: 'var(--ink-muted)',
+                        cursor: 'pointer',
+                      }}
+                      title="Clear"
+                    >
+                      <i className="bi bi-x-circle-fill"></i>
+                    </button>
+                  )}
                 </div>
 
                 <select
@@ -241,6 +260,20 @@ export function OrdersPage({ orders = [], onOpenNewOrder, onUpdateStatus }) {
                   <option value="received">Received &amp; Delivered</option>
                   <option value="cancelled">Cancelled</option>
                 </select>
+
+                {(searchQuery || statusFilter) && (
+                  <button
+                    type="button"
+                    className="btn btn-outline-primary btn-sm"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setStatusFilter('');
+                    }}
+                    title="Reset filters"
+                  >
+                    <i className="bi bi-arrow-counterclockwise me-1"></i>Reset
+                  </button>
+                )}
               </div>
             </div>
           </div>

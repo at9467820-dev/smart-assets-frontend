@@ -30,6 +30,7 @@ export function App() {
   const [currentTab, setTab] = useState('dashboard');
   const [theme, setTheme] = useState(localStorage.getItem('ap-theme') || 'dark');
   const [accent, setAccent] = useState(localStorage.getItem('ap-accent') || 'indigo');
+  const [globalSearch, setGlobalSearch] = useState('');
 
   // Data States
   const [stats, setStats] = useState(null);
@@ -184,6 +185,12 @@ export function App() {
           onOpenScanner={() => setTab('scanner')}
           onOpenCmdPalette={() => setIsCmdOpen(true)}
           onOpenAuth={() => setIsAuthOpen(true)}
+          onSearch={(q, submit) => {
+            setGlobalSearch(q);
+            if (q.trim() || submit) {
+              setTab('assets');
+            }
+          }}
         />
 
         <main className="content-area">
@@ -212,6 +219,7 @@ export function App() {
             <AssetsPage
               assets={assets}
               departments={departments}
+              initialSearch={globalSearch}
               onOpenIssueModal={(asset) => {
                 setIssueModalAsset(asset);
                 setIsIssueModalOpen(true);
@@ -307,6 +315,10 @@ export function App() {
                 setIsMaintenanceModalOpen(true);
               }}
               onOpenReturnModal={(iss) => setReturnModalIssue(iss)}
+              onOpenLabelStudio={(asset) => {
+                setLabelStudioAsset(asset);
+                setIsLabelStudioOpen(true);
+              }}
             />
           )}
 
@@ -334,6 +346,11 @@ export function App() {
           setIsMaintenanceModalOpen(true);
         }}
         onOpenScanner={() => setTab('scanner')}
+        assets={assets}
+        onSelectAsset={(a) => {
+          setTab('assets');
+          setGlobalSearch(a.asset_tag);
+        }}
       />
 
       {/* ── Authentication & Password Reset Modal ────────────── */}
