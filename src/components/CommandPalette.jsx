@@ -130,7 +130,7 @@ export function CommandPalette({
         })
         .slice(0, 6)
         .map((a) => ({
-          label: `${a.asset_tag} — ${a.name} (${a.department?.name || a.category || 'Asset'})`,
+          label: `${a.asset_tag} — ${a.name} (${a.department?.name || a.department_name || a.category || 'Asset'})`,
           icon: 'bi-box-seam',
           tag: a.status || 'Active',
           handler: () => {

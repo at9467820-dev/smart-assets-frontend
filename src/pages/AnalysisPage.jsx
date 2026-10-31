@@ -4,7 +4,12 @@ export function AnalysisPage({ assets = [], departments = [] }) {
   const deptStats = useMemo(() => {
     if (departments.length > 0) {
       return departments.map((d) => {
-        const dAssets = assets.filter((a) => (a.department_id || a.department?.id) === d.id);
+        const dAssets = assets.filter(
+          (a) =>
+            (a.department_id || a.department?.id) === d.id ||
+            (a.department_code && a.department_code.toUpperCase() === d.code.toUpperCase()) ||
+            (a.department_name && a.department_name.toLowerCase() === d.name.toLowerCase())
+        );
         const total = dAssets.length;
         const active = dAssets.filter((a) => a.status === 'active').length;
         const repair = dAssets.filter((a) => a.status === 'under_repair').length;
@@ -114,7 +119,7 @@ export function AnalysisPage({ assets = [], departments = [] }) {
                   </div>
                 </div>
                 <span className="badge-pill badge-navy" style={{ fontSize: '10px' }}>
-                  {a.department?.name || 'General'}
+                  {a.department?.name || a.department_name || (a.department_code ? `Dept ${a.department_code}` : 'General')}
                 </span>
               </div>
             ))}

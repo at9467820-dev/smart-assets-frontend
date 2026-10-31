@@ -1,10 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 
-export function IssueModal({ asset, availableAssets = [], onClose, onSuccess }) {
-  const [assetId, setAssetId] = useState(asset?.id || availableAssets[0]?.id || '');
+export function IssueModal({ asset, availableAssets = [], departments = [], onClose, onSuccess }) {
+  // Only selectable assets (not currently issued and not retired)
+  const selectableAssets = useMemo(() => {
+    return availableAssets.filter((a) => !a.is_currently_issued && a.status !== 'retired');
+  }, [availableAssets]);
+
+  const [assetId, setAssetId] = useState(
+    asset?.id ? String(asset.id) : (selectableAssets[0]?.id ? String(selectableAssets[0].id) : '')
+  );
+
+  useEffect(() => {
+    if (!asset && (!assetId || !selectableAssets.some((a) => String(a.id) === String(assetId)))) {
+      if (selectableAssets.length > 0) {
+        setAssetId(String(selectableAssets[0].id));
+      } else {
+        setAssetId('');
+      }
+    }
+  }, [asset, selectableAssets, assetId]);
+
   const [issuedToName, setIssuedToName] = useState('');
   const [issuedToIdNumber, setIssuedToIdNumber] = useState('');
-  const [issuedToDept, setIssuedToDept] = useState('');
+  const [issuedToDept, setIssuedToDept] = useState(departments[0]?.name || '');
   const [issuedToPhone, setIssuedToPhone] = useState('');
   const [issuedToEmail, setIssuedToEmail] = useState('');
   const [purpose, setPurpose] = useState('');
@@ -13,6 +31,12 @@ export function IssueModal({ asset, availableAssets = [], onClose, onSuccess }) 
   const [issueCondition, setIssueCondition] = useState('Good / Functional');
   const [remarks, setRemarks] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!issuedToDept && departments.length > 0) {
+      setIssuedToDept(departments[0].name);
+    }
+  }, [departments, issuedToDept]);
 
   const selectedAsset = asset || availableAssets.find((a) => String(a.id) === String(assetId));
 
@@ -107,21 +131,32 @@ export function IssueModal({ asset, availableAssets = [], onClose, onSuccess }) 
                 <span className="badge-pill badge-success">Ready for Issue</span>
               </div>
             ) : (
-              <select
-                className="form-control-custom"
-                value={assetId}
-                onChange={(e) => setAssetId(e.target.value)}
-                required
-              >
-                <option value="">-- Select an available asset --</option>
-                {availableAssets
-                  .filter((a) => !a.is_currently_issued && a.status !== 'retired')
-                  .map((a) => (
+              <div>
+                <select
+                  className="form-control-custom"
+                  value={assetId}
+                  onChange={(e) => setAssetId(e.target.value)}
+                  required
+                >
+                  <option value="">
+                    {selectableAssets.length > 0
+                      ? `-- Select an available equipment (${selectableAssets.length} available) --`
+                      : '-- No unissued assets currently available --'}
+                  </option>
+                  {selectableAssets.map((a) => (
                     <option key={a.id} value={a.id}>
-                      [{a.asset_tag}] {a.name} ({a.department_code || a.category})
+                      [{a.asset_tag}] {a.name} — {a.department?.name || a.department_name || a.department_code || a.category} ({a.location || 'Campus'})
                     </option>
                   ))}
-              </select>
+                </select>
+                {selectedAsset && (
+                  <div style={{ marginTop: '6px', fontSize: '12px', color: 'var(--ink-muted)' }}>
+                    Tag: <strong style={{ color: 'var(--heading)' }}>{selectedAsset.asset_tag}</strong> • Dept:{' '}
+                    <strong>{selectedAsset.department?.name || selectedAsset.department_name || 'General'}</strong> • Location:{' '}
+                    {selectedAsset.location || 'Lab'}
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
@@ -149,14 +184,24 @@ export function IssueModal({ asset, availableAssets = [], onClose, onSuccess }) 
               />
             </div>
             <div className="col-md-4">
-              <label className="form-label-custom">Department / Unit</label>
-              <input
-                type="text"
+              <label className="form-label-custom">Department / Unit *</label>
+              <select
                 className="form-control-custom"
-                placeholder="e.g. CS Lab 2"
                 value={issuedToDept}
                 onChange={(e) => setIssuedToDept(e.target.value)}
-              />
+                required
+              >
+                <option value="">-- Select Recipient Department --</option>
+                {departments.map((d) => (
+                  <option key={d.id} value={d.name}>
+                    {d.name} ({d.code})
+                  </option>
+                ))}
+                <option value="Administration">Administration</option>
+                <option value="General Campus">General Campus</option>
+                <option value="Student Project">Student Project</option>
+                <option value="Other / External">Other / External</option>
+              </select>
             </div>
             <div className="col-md-4">
               <label className="form-label-custom">Phone / Mobile</label>

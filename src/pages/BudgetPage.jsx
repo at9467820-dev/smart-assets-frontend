@@ -41,7 +41,12 @@ export function BudgetPage({ departments = [], assets = [] }) {
     // Dynamic computation from passed departments & assets
     if (departments.length > 0) {
       return departments.map((d) => {
-        const dAssets = assets.filter((a) => (a.department_id || a.department?.id) === d.id);
+        const dAssets = assets.filter(
+          (a) =>
+            (a.department_id || a.department?.id) === d.id ||
+            (a.department_code && a.department_code.toUpperCase() === d.code.toUpperCase()) ||
+            (a.department_name && a.department_name.toLowerCase() === d.name.toLowerCase())
+        );
         const totalVal = dAssets.reduce((sum, a) => sum + (parseFloat(a.purchase_cost) || 0), 0);
         const estMaint = Math.round(totalVal * 0.08);
         const estRepl = Math.round(totalVal * 0.15);

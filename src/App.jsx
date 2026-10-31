@@ -387,6 +387,7 @@ export function App() {
         <IssueModal
           asset={issueModalAsset}
           availableAssets={assets}
+          departments={departments}
           onClose={() => {
             setIsIssueModalOpen(false);
             setIssueModalAsset(null);

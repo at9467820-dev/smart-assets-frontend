@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export function NewAssetModal({ departments = [], onClose, onSuccess }) {
   const [name, setName] = useState('');
   const [category, setCategory] = useState('Computer');
-  const [departmentId, setDepartmentId] = useState(departments[0]?.id || 1);
+  const [departmentId, setDepartmentId] = useState(
+    departments[0]?.id ? String(departments[0].id) : ''
+  );
   const [location, setLocation] = useState('');
   const [purchaseCost, setPurchaseCost] = useState('');
   const [purchaseDate, setPurchaseDate] = useState('');
@@ -13,6 +15,12 @@ export function NewAssetModal({ departments = [], onClose, onSuccess }) {
   const [manufacturer, setManufacturer] = useState('');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if ((!departmentId || !departments.some((d) => String(d.id) === String(departmentId))) && departments.length > 0) {
+      setDepartmentId(String(departments[0].id));
+    }
+  }, [departments, departmentId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -117,6 +125,7 @@ export function NewAssetModal({ departments = [], onClose, onSuccess }) {
                 onChange={(e) => setDepartmentId(e.target.value)}
                 required
               >
+                <option value="">-- Select Department --</option>
                 {departments.map((d) => (
                   <option key={d.id} value={d.id}>
                     {d.name} ({d.code})

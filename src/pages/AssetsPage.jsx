@@ -36,7 +36,13 @@ export function AssetsPage({
         (a.serial_number && a.serial_number.toLowerCase().includes(q));
 
       const matchCat = !selectedCategory || a.category === selectedCategory;
-      const matchDept = !selectedDept || String(a.department_id || a.department?.id) === String(selectedDept);
+      const matchDept =
+        !selectedDept ||
+        String(a.department_id || a.department?.id) === String(selectedDept) ||
+        (a.department_name && a.department_name.toLowerCase() === selectedDept.toLowerCase()) ||
+        (a.department?.name && a.department.name.toLowerCase() === selectedDept.toLowerCase()) ||
+        (a.department_code && a.department_code.toLowerCase() === selectedDept.toLowerCase()) ||
+        (a.department?.code && a.department.code.toLowerCase() === selectedDept.toLowerCase());
       const matchStatus = !selectedStatus || a.status === selectedStatus;
 
       return matchQ && matchCat && matchDept && matchStatus;
@@ -268,7 +274,7 @@ export function AssetsPage({
                     <td>
                       <span className="badge-pill badge-navy">{a.category || 'General'}</span>
                     </td>
-                    <td>{a.department?.name || 'General Dept'}</td>
+                    <td>{a.department?.name || a.department_name || (a.department_code ? `Dept ${a.department_code}` : 'General Dept')}</td>
                     <td>
                       <span
                         className={`badge-pill ${
@@ -417,7 +423,9 @@ export function AssetsPage({
                       </tr>
                       <tr>
                         <td style={{ fontWeight: 600 }}>Department</td>
-                        <td>{selectedAsset.department?.name || 'General'}</td>
+                        <td>
+                          {selectedAsset.department?.name || selectedAsset.department_name || (selectedAsset.department_code ? `Dept ${selectedAsset.department_code}` : 'General Dept')}
+                        </td>
                       </tr>
                       <tr>
                         <td style={{ fontWeight: 600 }}>Current Location</td>

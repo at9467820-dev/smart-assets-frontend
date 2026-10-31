@@ -38,7 +38,7 @@ export function Dashboard({
 
   const deptCounts = {};
   assets.forEach((a) => {
-    const dName = a.department?.name || 'General';
+    const dName = a.department?.name || a.department_name || (a.department_code ? `Dept ${a.department_code}` : 'General');
     deptCounts[dName] = (deptCounts[dName] || 0) + 1;
   });
   const deptList = Object.entries(deptCounts);

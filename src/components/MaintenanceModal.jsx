@@ -1,7 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export function MaintenanceModal({ asset, availableAssets = [], onClose, onSuccess }) {
-  const [assetId, setAssetId] = useState(asset?.id || availableAssets[0]?.id || '');
+  const [assetId, setAssetId] = useState(
+    asset?.id ? String(asset.id) : (availableAssets[0]?.id ? String(availableAssets[0].id) : '')
+  );
+
+  useEffect(() => {
+    if (!asset && (!assetId || !availableAssets.some((a) => String(a.id) === String(assetId)))) {
+      if (availableAssets.length > 0) {
+        setAssetId(String(availableAssets[0].id));
+      }
+    }
+  }, [asset, availableAssets, assetId]);
+
   const [issueDescription, setIssueDescription] = useState('');
   const [priority, setPriority] = useState('medium');
   const [scheduledDate, setScheduledDate] = useState('');
@@ -86,10 +97,10 @@ export function MaintenanceModal({ asset, availableAssets = [], onClose, onSucce
                 onChange={(e) => setAssetId(e.target.value)}
                 required
               >
-                <option value="">-- Choose asset --</option>
+                <option value="">-- Choose asset to service ({availableAssets.length} total) --</option>
                 {availableAssets.map((a) => (
                   <option key={a.id} value={a.id}>
-                    [{a.asset_tag}] {a.name}
+                    [{a.asset_tag}] {a.name} — {a.department?.name || a.department_name || a.category} ({a.status})
                   </option>
                 ))}
               </select>
