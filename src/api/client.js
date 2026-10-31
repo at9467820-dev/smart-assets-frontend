@@ -230,6 +230,79 @@ export const api = {
     return await fetchJson('/analysis');
   },
 
+  // Authentication API
+  async login(username, password) {
+    try {
+      const url = `${API_BASE}/auth/login`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        return { success: false, error: data?.error || 'Invalid username or password' };
+      }
+      return { success: true, ...data };
+    } catch (err) {
+      return { success: false, error: err.message || 'Network connection failed' };
+    }
+  },
+
+  async register(userData) {
+    try {
+      const url = `${API_BASE}/auth/register`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        return { success: false, error: data?.error || 'Registration failed' };
+      }
+      return { success: true, ...data };
+    } catch (err) {
+      return { success: false, error: err.message || 'Network connection failed' };
+    }
+  },
+
+  async forgotPassword(emailOrUsername) {
+    try {
+      const url = `${API_BASE}/auth/forgot-password`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailOrUsername, username: emailOrUsername }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        return { success: false, error: data?.error || 'Account not found' };
+      }
+      return { success: true, ...data };
+    } catch (err) {
+      return { success: false, error: err.message || 'Network connection failed' };
+    }
+  },
+
+  async resetPassword(username, newPassword) {
+    try {
+      const url = `${API_BASE}/auth/reset-password`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, new_password: newPassword }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        return { success: false, error: data?.error || 'Password update failed' };
+      }
+      return { success: true, ...data };
+    } catch (err) {
+      return { success: false, error: err.message || 'Network connection failed' };
+    }
+  },
+
   // Export URLs
   getExportUrl(type) {
     return `${API_BASE}/export/${type}`;

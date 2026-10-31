@@ -45,6 +45,28 @@ export function App() {
   // Modal & Drawer States
   const [isCmdOpen, setIsCmdOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('assetpulse_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+
+  const handleLoginSuccess = (user) => {
+    setCurrentUser(user);
+    try {
+      localStorage.setItem('assetpulse_user', JSON.stringify(user));
+    } catch (e) {}
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    try {
+      localStorage.removeItem('assetpulse_user');
+    } catch (e) {}
+  };
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isLabelStudioOpen, setIsLabelStudioOpen] = useState(false);
   const [labelStudioAsset, setLabelStudioAsset] = useState(null);
@@ -166,6 +188,8 @@ export function App() {
         overdueCount={overdueIssuesCount}
         maintCount={pendingMaintCount}
         onOpenAuth={() => setIsAuthOpen(true)}
+        currentUser={currentUser}
+        onLogout={handleLogout}
       />
 
       {/* ── Main Content Area ───────────────────────────────── */}
@@ -354,7 +378,13 @@ export function App() {
       />
 
       {/* ── Authentication & Password Reset Modal ────────────── */}
-      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+        currentUser={currentUser}
+        onLoginSuccess={handleLoginSuccess}
+        departments={departments}
+      />
 
       {/* ── Real-Time Notification Center Drawer ─────────────── */}
       <NotificationDrawer

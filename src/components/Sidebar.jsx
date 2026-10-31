@@ -1,6 +1,6 @@
 import React from 'react';
 
-export function Sidebar({ currentTab, setTab, overdueCount = 0, maintCount = 0, onOpenAuth }) {
+export function Sidebar({ currentTab, setTab, overdueCount = 0, maintCount = 0, onOpenAuth, currentUser, onLogout }) {
   const navSections = [
     {
       title: 'Operations',
@@ -109,19 +109,35 @@ export function Sidebar({ currentTab, setTab, overdueCount = 0, maintCount = 0, 
           <div className="sidebar-avatar">
             <i className="bi bi-person-fill" style={{ fontSize: '16px' }}></i>
           </div>
-          <div className="sidebar-user-info">
-            <div className="sidebar-user-name">Administrator</div>
-            <div className="sidebar-user-role">Superuser &bull; HQ Admin</div>
+          <div className="sidebar-user-info" style={{ overflow: 'hidden' }}>
+            <div className="sidebar-user-name" style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+              {currentUser ? (currentUser.full_name || currentUser.username) : 'Guest User'}
+            </div>
+            <div className="sidebar-user-role">
+              {currentUser ? `${(currentUser.role || 'Staff').toUpperCase()} • ${currentUser.department_name || 'Campus'}` : 'Click to Sign In'}
+            </div>
           </div>
-          <button
-            type="button"
-            className="btn-icon ms-auto"
-            title="Sign in / Profile"
-            onClick={onOpenAuth}
-            style={{ border: 'none', background: 'transparent', color: '#94A3B8' }}
-          >
-            <i className="bi bi-box-arrow-right"></i>
-          </button>
+          {currentUser ? (
+            <button
+              type="button"
+              className="btn-icon ms-auto"
+              title="Sign Out"
+              onClick={onLogout}
+              style={{ border: 'none', background: 'transparent', color: 'var(--danger)', cursor: 'pointer' }}
+            >
+              <i className="bi bi-box-arrow-right"></i>
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="btn-icon ms-auto"
+              title="Sign In / Register"
+              onClick={onOpenAuth}
+              style={{ border: 'none', background: 'transparent', color: 'var(--emerald)', cursor: 'pointer' }}
+            >
+              <i className="bi bi-box-arrow-in-right"></i>
+            </button>
+          )}
         </div>
       </div>
     </nav>

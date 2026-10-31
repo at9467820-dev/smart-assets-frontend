@@ -1,61 +1,195 @@
 import React, { useState } from 'react';
+import { api } from '../api/client';
 
-export function AuthModal({ isOpen, onClose }) {
+export function AuthModal({ isOpen, onClose, onLoginSuccess, currentUser, departments = [] }) {
   const [view, setView] = useState('login'); // 'login' | 'register' | 'forgot' | 'reset'
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [flashMsg, setFlashMsg] = useState(null);
+
+  // Sign In State
   const [username, setUsername] = useState('admin');
   const [password, setPassword] = useState('admin123');
-  const [email, setEmail] = useState('');
+
+  // Register State
   const [fullName, setFullName] = useState('');
+  const [regUsername, setRegUsername] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [regDeptId, setRegDeptId] = useState(departments[0]?.id ? String(departments[0].id) : '');
+
+  // Forgot Password State
+  const [forgotTarget, setForgotTarget] = useState('');
+
+  // Reset Password State
+  const [resetUsername, setResetUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [flashMsg, setFlashMsg] = useState(null);
 
   if (!isOpen) return null;
 
   const fillCreds = (u, p) => {
     setUsername(u);
     setPassword(p);
+    setFlashMsg(null);
   };
 
-  const handleLoginSubmit = (e) => {
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
-    setFlashMsg({ type: 'success', text: `Signed in as ${username} successfully!` });
-    setTimeout(() => {
-      setFlashMsg(null);
-      onClose();
-    }, 800);
+    if (!username.trim() || !password) {
+      setFlashMsg({ type: 'danger', text: 'Please enter both username/email and password.' });
+      return;
+    }
+
+    setLoading(true);
+    setFlashMsg(null);
+
+    try {
+      const res = await api.login(username.trim(), password);
+      if (!res.success) {
+        setFlashMsg({ type: 'danger', text: res.error || 'Invalid username or password. Access denied.' });
+        return;
+      }
+
+      setFlashMsg({
+        type: 'success',
+        text: res.message || `Welcome back, ${res.user?.full_name || res.user?.username || username}!`,
+      });
+
+      if (onLoginSuccess && res.user) {
+        onLoginSuccess(res.user);
+      }
+
+      setTimeout(() => {
+        setFlashMsg(null);
+        onClose();
+      }, 800);
+    } catch (err) {
+      setFlashMsg({ type: 'danger', text: err.message || 'Authentication failed due to connection error.' });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleRegisterSubmit = (e) => {
+  const handleRegisterSubmit = async (e) => {
     e.preventDefault();
-    setFlashMsg({ type: 'success', text: 'Account registered successfully! Redirecting...' });
-    setTimeout(() => {
-      setFlashMsg(null);
-      setView('login');
-    }, 1000);
+    if (!regUsername.trim() || !regEmail.trim() || !regPassword) {
+      setFlashMsg({ type: 'danger', text: 'Please fill in all required fields.' });
+      return;
+    }
+
+    if (regPassword.length < 6) {
+      setFlashMsg({ type: 'danger', text: 'Password must be at least 6 characters long.' });
+      return;
+    }
+
+    setLoading(true);
+    setFlashMsg(null);
+
+    try {
+      const res = await api.register({
+        username: regUsername.trim(),
+        email: regEmail.trim(),
+        password: regPassword,
+        full_name: fullName.trim() || regUsername.trim(),
+        department_id: regDeptId || null,
+      });
+
+      if (!res.success) {
+        setFlashMsg({ type: 'danger', text: res.error || 'Registration failed.' });
+        return;
+      }
+
+      setFlashMsg({
+        type: 'success',
+        text: res.message || 'Account registered successfully! Redirecting to sign in...',
+      });
+
+      setUsername(regUsername.trim());
+      setPassword('');
+
+      setTimeout(() => {
+        setFlashMsg(null);
+        setView('login');
+      }, 1200);
+    } catch (err) {
+      setFlashMsg({ type: 'danger', text: err.message || 'Registration failed.' });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleForgotSubmit = (e) => {
+  const handleForgotSubmit = async (e) => {
     e.preventDefault();
-    setFlashMsg({ type: 'success', text: 'Password reset link sent to your email!' });
-    setTimeout(() => {
-      setFlashMsg(null);
-      setView('reset');
-    }, 1200);
+    if (!forgotTarget.trim()) {
+      setFlashMsg({ type: 'danger', text: 'Please enter your email address or username.' });
+      return;
+    }
+
+    setLoading(true);
+    setFlashMsg(null);
+
+    try {
+      const res = await api.forgotPassword(forgotTarget.trim());
+      if (!res.success) {
+        setFlashMsg({ type: 'danger', text: res.error || 'Account not found.' });
+        return;
+      }
+
+      setFlashMsg({ type: 'success', text: res.message });
+      setResetUsername(res.username || forgotTarget.trim());
+
+      setTimeout(() => {
+        setFlashMsg(null);
+        setView('reset');
+      }, 1200);
+    } catch (err) {
+      setFlashMsg({ type: 'danger', text: err.message || 'Request failed.' });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleResetSubmit = (e) => {
+  const handleResetSubmit = async (e) => {
     e.preventDefault();
+    if (!resetUsername.trim() || !newPassword) {
+      setFlashMsg({ type: 'danger', text: 'Please enter your username and new password.' });
+      return;
+    }
+
     if (newPassword !== confirmPassword) {
       setFlashMsg({ type: 'danger', text: 'Passwords do not match!' });
       return;
     }
-    setFlashMsg({ type: 'success', text: 'Password updated! Please sign in.' });
-    setTimeout(() => {
-      setFlashMsg(null);
-      setView('login');
-    }, 1000);
+
+    if (newPassword.length < 6) {
+      setFlashMsg({ type: 'danger', text: 'Password must be at least 6 characters long.' });
+      return;
+    }
+
+    setLoading(true);
+    setFlashMsg(null);
+
+    try {
+      const res = await api.resetPassword(resetUsername.trim(), newPassword);
+      if (!res.success) {
+        setFlashMsg({ type: 'danger', text: res.error || 'Password update failed.' });
+        return;
+      }
+
+      setFlashMsg({ type: 'success', text: res.message });
+      setUsername(resetUsername.trim());
+      setPassword(newPassword);
+
+      setTimeout(() => {
+        setFlashMsg(null);
+        setView('login');
+      }, 1200);
+    } catch (err) {
+      setFlashMsg({ type: 'danger', text: err.message || 'Reset failed.' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -266,24 +400,35 @@ export function AuthModal({ isOpen, onClose }) {
 
                 <button
                   type="submit"
+                  disabled={loading}
                   style={{
                     width: '100%',
                     padding: '10px',
-                    background: '#2563EB',
+                    background: loading ? '#1D4ED8' : '#2563EB',
                     border: '1px solid #1D4ED8',
                     borderRadius: '6px',
                     color: '#fff',
                     fontSize: '13.5px',
                     fontWeight: 600,
-                    cursor: 'pointer',
+                    cursor: loading ? 'not-allowed' : 'pointer',
                     boxShadow: '0 1px 2px rgba(37, 99, 235, 0.2)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '6px',
+                    opacity: loading ? 0.75 : 1,
                   }}
                 >
-                  <span>Sign In</span> <i className="bi bi-arrow-right-short" style={{ fontSize: '18px' }}></i>
+                  {loading ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                      <span>Verifying Credentials...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Sign In</span> <i className="bi bi-arrow-right-short" style={{ fontSize: '18px' }}></i>
+                    </>
+                  )}
                 </button>
               </form>
 
@@ -406,6 +551,32 @@ export function AuthModal({ isOpen, onClose }) {
             <form onSubmit={handleResetSubmit}>
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ fontSize: '11px', fontWeight: 700, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '6px' }}>
+                  Account Username
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type="text"
+                    value={resetUsername}
+                    onChange={(e) => setResetUsername(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '11px 14px 11px 38px',
+                      background: 'rgba(10, 17, 36, 0.65)',
+                      border: '1px solid rgba(255,255,255,0.14)',
+                      borderRadius: '10px',
+                      fontSize: '13.5px',
+                      color: '#fff',
+                      outline: 'none',
+                    }}
+                    placeholder="Enter username"
+                    required
+                  />
+                  <i className="bi bi-person" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }}></i>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ fontSize: '11px', fontWeight: 700, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '6px' }}>
                   New Password
                 </label>
                 <div style={{ position: 'relative' }}>
@@ -518,13 +689,13 @@ export function AuthModal({ isOpen, onClose }) {
             <form onSubmit={handleForgotSubmit}>
               <div style={{ marginBottom: '20px' }}>
                 <label style={{ fontSize: '11px', fontWeight: 700, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '6px' }}>
-                  Institutional Email
+                  Campus Email or Username
                 </label>
                 <div style={{ position: 'relative' }}>
                   <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    type="text"
+                    value={forgotTarget}
+                    onChange={(e) => setForgotTarget(e.target.value)}
                     style={{
                       width: '100%',
                       padding: '11px 14px 11px 38px',
@@ -535,7 +706,7 @@ export function AuthModal({ isOpen, onClose }) {
                       color: '#fff',
                       outline: 'none',
                     }}
-                    placeholder="name@campus.edu"
+                    placeholder="Enter your campus email or username"
                     required
                   />
                   <i className="bi bi-envelope" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }}></i>
@@ -602,6 +773,22 @@ export function AuthModal({ isOpen, onClose }) {
               </button>
             </div>
 
+            {flashMsg && (
+              <div
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  fontSize: '12.5px',
+                  marginBottom: '16px',
+                  background: flashMsg.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
+                  color: flashMsg.type === 'success' ? '#86efac' : '#fca5a5',
+                  border: '1px solid ' + (flashMsg.type === 'success' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'),
+                }}
+              >
+                {flashMsg.text}
+              </div>
+            )}
+
             <form onSubmit={handleRegisterSubmit}>
               <div className="row g-3">
                 <div className="col-md-6">
@@ -619,21 +806,25 @@ export function AuthModal({ isOpen, onClose }) {
                 </div>
                 <div className="col-md-6">
                   <label style={{ fontSize: '11px', fontWeight: 700, color: '#cbd5e1', textTransform: 'uppercase', display: 'block', marginBottom: '6px' }}>
-                    Username
+                    Username *
                   </label>
                   <input
                     type="text"
+                    value={regUsername}
+                    onChange={(e) => setRegUsername(e.target.value)}
                     style={{ width: '100%', padding: '10px 12px', background: '#060e0c', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff', fontSize: '13.5px' }}
-                    placeholder="tariq_m"
+                    placeholder="e.g. tariq_m"
                     required
                   />
                 </div>
                 <div className="col-md-12">
                   <label style={{ fontSize: '11px', fontWeight: 700, color: '#cbd5e1', textTransform: 'uppercase', display: 'block', marginBottom: '6px' }}>
-                    Campus Email
+                    Campus Email *
                   </label>
                   <input
                     type="email"
+                    value={regEmail}
+                    onChange={(e) => setRegEmail(e.target.value)}
                     style={{ width: '100%', padding: '10px 12px', background: '#060e0c', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff', fontSize: '13.5px' }}
                     placeholder="tariq@campus.edu"
                     required
@@ -641,12 +832,15 @@ export function AuthModal({ isOpen, onClose }) {
                 </div>
                 <div className="col-md-6">
                   <label style={{ fontSize: '11px', fontWeight: 700, color: '#cbd5e1', textTransform: 'uppercase', display: 'block', marginBottom: '6px' }}>
-                    Password
+                    Password (min 6 chars) *
                   </label>
                   <input
                     type="password"
+                    value={regPassword}
+                    onChange={(e) => setRegPassword(e.target.value)}
                     style={{ width: '100%', padding: '10px 12px', background: '#060e0c', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff', fontSize: '13.5px' }}
-                    placeholder="Create password"
+                    placeholder="Create strong password"
+                    minLength={6}
                     required
                   />
                 </div>
@@ -654,31 +848,51 @@ export function AuthModal({ isOpen, onClose }) {
                   <label style={{ fontSize: '11px', fontWeight: 700, color: '#cbd5e1', textTransform: 'uppercase', display: 'block', marginBottom: '6px' }}>
                     Department
                   </label>
-                  <select style={{ width: '100%', padding: '10px 12px', background: '#060e0c', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff', fontSize: '13.5px' }}>
-                    <option>Computer Science</option>
-                    <option>Electrical Engineering</option>
-                    <option>Mechanical Engineering</option>
-                    <option>Administration</option>
+                  <select
+                    value={regDeptId}
+                    onChange={(e) => setRegDeptId(e.target.value)}
+                    style={{ width: '100%', padding: '10px 12px', background: '#060e0c', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff', fontSize: '13.5px' }}
+                  >
+                    <option value="">-- Select Department --</option>
+                    {departments.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.name} ({d.code})
+                      </option>
+                    ))}
+                    <option value="">Administration / General</option>
                   </select>
                 </div>
               </div>
 
               <button
                 type="submit"
+                disabled={loading}
                 style={{
                   width: '100%',
                   marginTop: '20px',
                   padding: '12px',
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  background: loading ? '#059669' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                   border: 'none',
                   borderRadius: '10px',
                   color: '#fff',
                   fontSize: '14px',
                   fontWeight: 700,
-                  cursor: 'pointer',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  opacity: loading ? 0.75 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
                 }}
               >
-                Complete Registration
+                {loading ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    <span>Creating Account...</span>
+                  </>
+                ) : (
+                  <span>Complete Registration</span>
+                )}
               </button>
             </form>
 
