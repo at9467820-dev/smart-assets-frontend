@@ -1,16 +1,47 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 export function AnalysisPage({ assets = [], departments = [] }) {
-  const deptStats = [
-    { name: 'Computer Science', code: 'CSE', total: 18, active: 14, repair: 2, damaged: 1, retired: 1, utilPct: 78 },
-    { name: 'Electrical Engineering', code: 'EE', total: 12, active: 9, repair: 2, damaged: 1, retired: 0, utilPct: 75 },
-    { name: 'Mechanical Engineering', code: 'ME', total: 9, active: 7, repair: 1, damaged: 1, retired: 0, utilPct: 78 },
-    { name: 'Administration & Finance', code: 'ADM', total: 7, active: 6, repair: 0, damaged: 0, retired: 1, utilPct: 86 },
-  ];
+  const deptStats = useMemo(() => {
+    if (departments.length > 0) {
+      return departments.map((d) => {
+        const dAssets = assets.filter((a) => (a.department_id || a.department?.id) === d.id);
+        const total = dAssets.length;
+        const active = dAssets.filter((a) => a.status === 'active').length;
+        const repair = dAssets.filter((a) => a.status === 'under_repair').length;
+        const damaged = dAssets.filter((a) => a.status === 'damaged').length;
+        const retired = dAssets.filter((a) => a.status === 'retired').length;
+        const utilPct = total > 0 ? Math.round((active / total) * 100) : 0;
+        return {
+          name: d.name,
+          code: d.code,
+          total,
+          active,
+          repair,
+          damaged,
+          retired,
+          utilPct,
+        };
+      });
+    }
+    return [
+      { name: 'Computer Science & Engineering', code: 'CSE', total: 18, active: 14, repair: 2, damaged: 1, retired: 1, utilPct: 78 },
+      { name: 'Electronics & Communication', code: 'ECE', total: 12, active: 9, repair: 2, damaged: 1, retired: 0, utilPct: 75 },
+      { name: 'Mechanical Engineering', code: 'MECH', total: 9, active: 7, repair: 1, damaged: 1, retired: 0, utilPct: 78 },
+      { name: 'Civil Engineering', code: 'CIVIL', total: 6, active: 5, repair: 1, damaged: 0, retired: 0, utilPct: 83 },
+    ];
+  }, [departments, assets]);
 
-  const underutilized = assets.filter((a) => a.status === 'active' && a.id % 4 === 0);
-  const frequentlyDamaged = assets.filter((a) => a.status === 'under_repair' || a.id % 5 === 0);
-  const riskAssets = assets.filter((a) => (a.risk_score || 25) >= 50);
+  const underutilized = useMemo(() => {
+    return assets.filter((a) => a.status === 'active' && !a.is_currently_issued && (a.condition_rating || 5) <= 5);
+  }, [assets]);
+
+  const frequentlyDamaged = useMemo(() => {
+    return assets.filter((a) => a.status === 'under_repair' || a.status === 'damaged');
+  }, [assets]);
+
+  const riskAssets = useMemo(() => {
+    return assets.filter((a) => (a.risk_score || 0) >= 45);
+  }, [assets]);
 
   return (
     <div>

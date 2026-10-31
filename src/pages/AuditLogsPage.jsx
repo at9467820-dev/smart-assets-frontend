@@ -1,25 +1,51 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { api } from '../api/client';
 
 export function AuditLogsPage() {
   const [actionFilter, setActionFilter] = useState('');
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const sampleLogs = [
-    { id: 101, timestamp: '09 Oct 2026, 11:45:22', user: 'Administrator', role: 'admin', action: 'CREATE', entityType: 'MaterialIssue', entityId: 'GP-2026-0004', description: 'Generated Gate Pass (Parchi) for Dell Precision Tower 7920 to Dr. Tariq', ip: '192.168.1.45' },
-    { id: 102, timestamp: '09 Oct 2026, 10:15:08', user: 'Administrator', role: 'admin', action: 'LOGIN', entityType: 'UserSession', entityId: 'ADM-1', description: 'User administrator authenticated successfully via password credentials', ip: '192.168.1.45' },
-    { id: 103, timestamp: '08 Oct 2026, 16:30:19', user: 'Engr. Sarah', role: 'staff', action: 'UPDATE', entityType: 'Asset', entityId: 'EE-002', description: 'Updated equipment maintenance status to in_progress', ip: '192.168.1.88' },
-    { id: 104, timestamp: '08 Oct 2026, 14:10:00', user: 'Maint Team', role: 'maintenance', action: 'CREATE', entityType: 'MaintenanceLog', entityId: '#12', description: 'Logged preventive service ticket for 3D Printer Ultimaker S5', ip: '192.168.1.102' },
-    { id: 105, timestamp: '07 Oct 2026, 09:25:44', user: 'Administrator', role: 'admin', action: 'CREATE', entityType: 'AssetOrder', entityId: 'ORD-2026-0005', description: 'Submitted purchase requisition for Cisco Catalyst 9300 Switch', ip: '192.168.1.45' },
+    { id: 101, timestamp: '29 Oct 2026, 11:45:22 AM', user: 'admin', action: 'CREATE', entity: 'AssetIssue', description: 'Generated Gate Pass (Parchi) for Dell Optiplex 7090 Desktop', ip_address: '127.0.0.1' },
+    { id: 102, timestamp: '29 Oct 2026, 10:15:08 AM', user: 'admin', action: 'LOGIN', entity: 'UserSession', description: 'User admin signed in successfully via password credentials', ip_address: '127.0.0.1' },
+    { id: 103, timestamp: '28 Oct 2026, 04:30:19 PM', user: 'cse_staff', action: 'UPDATE', entity: 'Asset', description: 'Updated equipment maintenance status to in_progress', ip_address: '127.0.0.1' },
+    { id: 104, timestamp: '28 Oct 2026, 02:10:00 PM', user: 'maint1', action: 'CREATE', entity: 'MaintenanceLog', description: 'Logged preventive service ticket for Rigol Oscilloscope', ip_address: '127.0.0.1' },
+    { id: 105, timestamp: '27 Oct 2026, 09:25:44 AM', user: 'admin', action: 'CREATE', entity: 'AssetOrder', description: 'Submitted purchase requisition for Cisco Catalyst Switch', ip_address: '127.0.0.1' },
   ];
 
+  useEffect(() => {
+    let isMounted = true;
+    const fetchLogs = async () => {
+      try {
+        const liveLogs = await api.getAuditLogs();
+        if (isMounted) {
+          if (liveLogs && liveLogs.length > 0) {
+            setLogs(liveLogs);
+          } else {
+            setLogs(sampleLogs);
+          }
+        }
+      } catch (err) {
+        if (isMounted) setLogs(sampleLogs);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    fetchLogs();
+    return () => { isMounted = false; };
+  }, []);
+
   const filteredLogs = useMemo(() => {
-    if (!actionFilter) return sampleLogs;
-    return sampleLogs.filter((l) => l.action === actionFilter);
-  }, [actionFilter]);
+    const list = logs.length > 0 ? logs : sampleLogs;
+    if (!actionFilter) return list;
+    return list.filter((l) => (l.action || '').toUpperCase().includes(actionFilter.toUpperCase()));
+  }, [logs, actionFilter]);
 
   return (
     <div>
       {/* ── Page Header ─────────────────────────────────────── */}
-      <div className="page-header">
+      <div className="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div>
           <h1 className="page-title">
             <i className="bi bi-shield-check me-2" style={{ color: 'var(--emerald)' }}></i>
@@ -88,14 +114,18 @@ export function AuditLogsPage() {
             </thead>
             <tbody>
               {filteredLogs.map((log) => {
+                const act = (log.action || '').toUpperCase();
                 const actClass =
-                  log.action === 'LOGIN'
+                  act.includes('LOGIN')
                     ? 'badge-navy'
-                    : log.action === 'CREATE'
+                    : act.includes('CREATE')
                     ? 'badge-success'
-                    : log.action === 'UPDATE'
+                    : act.includes('UPDATE')
                     ? 'badge-warning'
                     : 'badge-danger';
+
+                const userName = log.user || 'System';
+                const initial = userName ? userName[0].toUpperCase() : 'S';
 
                 return (
                   <tr key={log.id}>
@@ -118,10 +148,10 @@ export function AuditLogsPage() {
                             fontWeight: 700,
                           }}
                         >
-                          {log.user[0]}
+                          {initial}
                         </div>
                         <span style={{ fontWeight: 600, color: 'var(--heading)', fontSize: '12.5px' }}>
-                          {log.user}
+                          {userName}
                         </span>
                       </div>
                     </td>
@@ -129,16 +159,22 @@ export function AuditLogsPage() {
                       <span className={`badge-pill ${actClass}`}>{log.action}</span>
                     </td>
                     <td style={{ fontSize: '12px' }}>
-                      <span style={{ fontWeight: 600 }}>{log.entityType}</span>{' '}
-                      <span className="text-muted">#{log.entityId}</span>
+                      <span style={{ fontWeight: 600 }}>{log.entity || log.entityType || 'Record'}</span>
                     </td>
-                    <td style={{ fontSize: '13px', maxWidth: '340px' }}>{log.description}</td>
+                    <td style={{ fontSize: '13px', maxWidth: '380px' }}>{log.description}</td>
                     <td style={{ fontSize: '11.5px', color: 'var(--ink-muted)', fontFamily: 'monospace' }}>
-                      {log.ip}
+                      {log.ip_address || log.ip || '127.0.0.1'}
                     </td>
                   </tr>
                 );
               })}
+              {filteredLogs.length === 0 && (
+                <tr>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '24px', color: 'var(--ink-muted)' }}>
+                    No audit records matching this filter.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

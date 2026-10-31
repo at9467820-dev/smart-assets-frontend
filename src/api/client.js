@@ -3,9 +3,32 @@
  * Connected to Render Live Backend: https://smart-assets.onrender.com
  */
 
-// Intelligent API Base: in local browser dev, prefer relative /api proxy to avoid CORS and connect with local backend
-const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-const API_BASE = (import.meta.env.VITE_API_URL || (isLocal ? '/api' : 'https://smart-assets.onrender.com/api')).replace(/\/+$/, '');
+function resolveApiBase() {
+  if (typeof window === 'undefined') {
+    return (import.meta.env.VITE_API_URL || 'https://smart-assets.onrender.com/api').replace(/\/+$/, '');
+  }
+  const host = window.location.hostname;
+  const port = window.location.port;
+  // If hosted on Vercel frontend, target Render live backend
+  if (host.includes('vercel.app')) {
+    return (import.meta.env.VITE_API_URL || 'https://smart-assets.onrender.com/api').replace(/\/+$/, '');
+  }
+  // If running locally (localhost, 127.0.0.1, 192.168.x.x, :5000, :3000) or served by Render Flask directly
+  if (
+    port === '5000' ||
+    port === '3000' ||
+    host === 'localhost' ||
+    host === '127.0.0.1' ||
+    host.startsWith('192.168.') ||
+    host.startsWith('10.') ||
+    host === 'smart-assets.onrender.com'
+  ) {
+    return '/api';
+  }
+  return (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
+}
+
+const API_BASE = resolveApiBase();
 
 async function fetchJson(endpoint, options = {}) {
   try {
@@ -169,6 +192,42 @@ export const api = {
   // QR Lookup
   async lookupIdentifier(identifier) {
     return await fetchJson(`/lookup/${encodeURIComponent(identifier)}`);
+  },
+
+  // Allocations & Transfers
+  async getAllocations() {
+    const data = await fetchJson('/allocations');
+    return data?.allocations || [];
+  },
+
+  async createAllocation(allocationData) {
+    return await fetchJson('/allocations', {
+      method: 'POST',
+      body: JSON.stringify(allocationData),
+    });
+  },
+
+  // Audit Logs
+  async getAuditLogs() {
+    const data = await fetchJson('/auth/logs');
+    return data?.logs || [];
+  },
+
+  // Budget
+  async getBudget() {
+    return await fetchJson('/budget');
+  },
+
+  async updateDepartmentBudget(budgetData) {
+    return await fetchJson('/budget/allocate', {
+      method: 'POST',
+      body: JSON.stringify(budgetData),
+    });
+  },
+
+  // Predictive Analytics
+  async getAnalysis() {
+    return await fetchJson('/analysis');
   },
 
   // Export URLs

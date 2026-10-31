@@ -355,14 +355,14 @@ export function Dashboard({
                     </span>
                   </td>
                   <td>
-                    <div style={{ fontWeight: 600, color: 'var(--heading)' }}>{iss.asset?.name || 'Lab Equipment'}</div>
-                    <small className="text-muted" style={{ fontFamily: 'var(--font-mono)' }}>{iss.asset?.asset_tag || 'CSE-001'}</small>
+                    <div style={{ fontWeight: 600, color: 'var(--heading)' }}>{iss.asset_name || iss.asset?.name || 'Lab Equipment'}</div>
+                    <small className="text-muted" style={{ fontFamily: 'var(--font-mono)' }}>{iss.asset_tag || iss.asset?.asset_tag || 'N/A'}</small>
                   </td>
                   <td>
-                    <div style={{ fontWeight: 500 }}>{iss.recipient_name}</div>
-                    <small className="text-muted">{iss.recipient_designation || 'Staff / Faculty'}</small>
+                    <div style={{ fontWeight: 500 }}>{iss.issued_to_name || iss.recipient_name || 'N/A'}</div>
+                    <small className="text-muted">{iss.issued_to_id_number || iss.recipient_designation || 'Staff / Faculty'}</small>
                   </td>
-                  <td>{iss.department?.name || 'General'}</td>
+                  <td>{iss.issued_to_dept || iss.department?.name || 'General'}</td>
                   <td>{iss.issue_date || 'Today'}</td>
                   <td>{iss.expected_return_date || 'Permanent'}</td>
                   <td>
